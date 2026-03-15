@@ -58,11 +58,11 @@
           flakeModules.style = styleModule;
 
           # export devenv modules for other projects to use
-          devenvModule = ./devenv/style;
+          devenvModule = ./devenv/devenv.nix;
           devenvModules = {
-            style = ./devenv/style;
-            hooks = ./devenv/style/hooks.nix;
-            fmt = ./devenv/style/treefmt.nix;
+            all = ./devenv/devenv.nix;
+            fmt = ./devenv/treefmt.nix;
+            hooks = ./devenv/hooks.nix;
           };
         };
       }

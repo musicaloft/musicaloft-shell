@@ -13,7 +13,7 @@
     { config, ... }:
     {
       # then add musicaloft style to the default shell
-      devenv.shells.default.imports = [ ../devenv/style ];
+      devenv.shells.default.imports = [ ../devenv/devenv.nix ];
 
       # and use treefmt as the formatter
       formatter = config.devenv.shells.default.treefmt.config.build.wrapper;

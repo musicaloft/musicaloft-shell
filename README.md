@@ -1,7 +1,7 @@
 # musicaloft-shell
 
-This is the standardized Musicaloft code style for consistent formatting and
-development practices across all Musicaloft projects.
+This is the standardized Musicaloft code style for consistent formatting and development practices
+across all Musicaloft projects.
 
 This repository is open for you to use on your own projects as well!
 

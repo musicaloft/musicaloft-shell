@@ -5,7 +5,7 @@
       proseWrap = "always";
     };
 
-    ".commitlintrc".json = {
+    ".commitlintrc.yaml".yaml = {
       rules = {
         description-empty.level = "error";
         description-format = {

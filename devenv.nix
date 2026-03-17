@@ -1,6 +1,6 @@
 {
   imports = [
-    ./modules/files.nix
+    ./modules/files
     ./modules/hooks.nix
     ./modules/treefmt.nix
   ];

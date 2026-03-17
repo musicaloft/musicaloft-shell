@@ -1,0 +1,37 @@
+{
+  files.".commitlintrc.yaml".yaml = {
+    rules = {
+      description-empty.level = "error";
+      description-format = {
+        level = "error";
+        format = "^[a-z].*$";
+      };
+      description-max-length = {
+        level = "error";
+        length = 72;
+      };
+      scope-max-length = {
+        level = "warning";
+        length = 10;
+      };
+      scope-empty.level = "warning";
+      type = {
+        level = "error";
+        options = [
+          "build"
+          "chore"
+          "ci"
+          "docs"
+          "dx"
+          "feat"
+          "fix"
+          "perf"
+          "refactor"
+          "revert"
+          "style"
+          "test"
+        ];
+      };
+    };
+  };
+}

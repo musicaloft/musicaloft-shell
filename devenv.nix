@@ -6,7 +6,7 @@
   ...
 }:
 let
-  cocoa = inputs.cocoa.packages.${pkgs.stdenv.system}.default;
+  cocoa = if inputs ? cocoa then inputs.cocoa.packages.${pkgs.stdenv.system}.default else null;
 in
 {
   imports = [ ./modules ];
@@ -18,7 +18,7 @@ in
   git-hooks.hooks = {
     treefmt.enable = true;
     cocoa-lint = {
-      enable = true;
+      enable = cocoa != null;
       name = "cocoa-lint";
       package = cocoa;
       description = "Validates commit messages with cocoa";

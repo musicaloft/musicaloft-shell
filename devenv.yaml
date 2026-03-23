@@ -16,6 +16,3 @@ inputs:
     inputs:
       nixpkgs:
         follows: nixpkgs
-
-imports:
-  - cocoa/devenv

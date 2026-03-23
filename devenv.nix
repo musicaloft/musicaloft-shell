@@ -4,16 +4,6 @@
   pkgs,
   ...
 }:
-let
-  cocoa = config.lib.getInput {
-    name = "cocoa";
-    url = "github:muni-corn/cocoa";
-    attribute = "git-hooks.hooks.cocoa-lint.enable";
-    follows = [ "nixpkgs" ];
-  };
-
-  cocoaPkg = cocoa.packages.${pkgs.stdenv.system}.default;
-in
 {
   imports = [ ./modules ];
 
@@ -22,19 +12,10 @@ in
 
   # hooks that apply to all projects
   git-hooks.hooks = {
+    cocoa-generate.enable = true;
+    cocoa-lint.enable = true;
     treefmt.enable = true;
-    cocoa-lint = {
-      enable = true;
-      name = "cocoa-lint";
-      package = lib.mkDefault cocoaPkg;
-      description = "Validates commit messages with cocoa";
-      entry = "${lib.getExe config.git-hooks.hooks.cocoa-lint.package} lint";
-      pass_filenames = true;
-      stages = [ "commit-msg" ];
-    };
   };
-
-  packages = [ cocoaPkg ];
 
   # treefmt for all projects
   treefmt = {

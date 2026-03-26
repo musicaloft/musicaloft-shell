@@ -140,11 +140,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1774377529,
-        "narHash": "sha256-Qkr+haUuMyKeJ3OODr4M2kvMHC9SenmJMBrs+zHD2ZY=",
+        "lastModified": 1774451221,
+        "narHash": "sha256-DojxZ43b8TJDaZJ3Z98WQvrzk7u3nVWOZ3CXqZwHrIc=",
         "owner": "muni-corn",
         "repo": "cocoa",
-        "rev": "79d902485dd8b3829e217263663bf0d4ba34260b",
+        "rev": "6570d7b9c984fc747ff11b4da2e8b62bf42fa42f",
         "type": "github"
       },
       "original": {
@@ -272,11 +272,11 @@
     "devenv_2": {
       "locked": {
         "dir": "src/modules",
-        "lastModified": 1774370150,
-        "narHash": "sha256-P6EAWzX7OwyP/T7mkQRBuDuNd1xyx2bbRmUTfWYm3lg=",
+        "lastModified": 1774475276,
+        "narHash": "sha256-z4erC+oMEuBHtox+B46FCv77IPvNy4SyXw/EeBxsD4I=",
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "899bc62cadea44e873a41db001a4c229769f3f4d",
+        "rev": "f8ca2c061ec2feceee1cf1c5e52c92f58b6aec9c",
         "type": "github"
       },
       "original": {

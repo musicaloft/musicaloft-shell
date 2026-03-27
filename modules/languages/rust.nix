@@ -7,6 +7,8 @@
 lib.mkIf config.languages.rust.enable {
   files.".cargo/config.toml".toml.alias.cover = "llvm-cov nextest";
 
+  languages.rust.components = lib.mkOptionDefault [ "llvm-tools-preview" ];
+
   git-hooks.hooks.clippy =
     let
       toolchain = config.languages.rust.toolchainPackage;

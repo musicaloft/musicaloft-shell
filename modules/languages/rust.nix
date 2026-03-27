@@ -5,7 +5,10 @@
   ...
 }:
 lib.mkIf config.languages.rust.enable {
-  files.".cargo/config.toml".toml.alias.cover = "llvm-cov nextest";
+  files = {
+    ".cargo/config.toml".toml.alias.cover = "llvm-cov nextest";
+    ".cargo/mutants.toml".toml.test_tool = "nextest";
+  };
 
   languages.rust.components = lib.mkOptionDefault [ "llvm-tools-preview" ];
 

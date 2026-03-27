@@ -2,6 +2,9 @@
 {
   imports = [ ./modules ] ++ lib.optional (inputs ? cocoa) "${inputs.cocoa}/devenv/devenv.nix";
 
+  # use muni's binary cache
+  cachix.pull = [ "municorn" ];
+
   # always enable nix for downstream shells
   languages.nix.enable = true;
 

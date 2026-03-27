@@ -8,6 +8,10 @@ lib.mkIf config.languages.rust.enable {
   files = {
     ".cargo/config.toml".toml.alias.cover = "llvm-cov nextest";
     ".cargo/mutants.toml".toml.test_tool = "nextest";
+    ".cargo/nextest.toml".toml.profile.ci = {
+      fail-fast = false;
+      retries = 4;
+    };
   };
 
   languages.rust.components = lib.mkOptionDefault [ "llvm-tools-preview" ];

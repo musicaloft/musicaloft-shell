@@ -23,17 +23,7 @@ in
     mold.enable = true;
   };
 
-  packages =
-    with pkgs;
-    [
-      bacon
-      cargo-outdated
-      cargo-tarpaulin
-    ]
-    ++ buildInputs
-    ++ nativeBuildInputs;
-
-  scripts.tarp.exec = ''cargo tarpaulin --engine llvm "$@"'';
+  packages = buildInputs ++ nativeBuildInputs;
 
   outputs.default =
     let

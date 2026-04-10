@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
+    musicaloft-shell.url = "github:musicaloft/musicaloft-shell";
 
     devenv = {
       url = "github:cachix/devenv";
@@ -12,11 +13,6 @@
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
-    };
-
-    musicaloft-shell = {
-      url = "github:musicaloft/musicaloft-shell/devenv";
-      flake = false;
     };
 
     treefmt-nix = {

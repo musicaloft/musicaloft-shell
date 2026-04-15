@@ -12,6 +12,6 @@
       ignoreCase = false;
     };
     sortPackageJson.sortScripts = true;
-    sortTailwindcss = true;
+    sortTailwindcss = { };
   };
 }

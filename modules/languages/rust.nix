@@ -13,8 +13,6 @@ lib.mkIf config.languages.rust.enable {
       retries = 4;
     };
     ".rustfmt.toml".toml = {
-      blank_lines_lower_bound = 1;
-      blank_lines_upper_bound = 2;
       condense_wildcard_suffixes = true;
       float_literal_trailing_zero = "IfNoPostfix";
       format_code_in_doc_comments = true;

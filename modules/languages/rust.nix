@@ -12,6 +12,27 @@ lib.mkIf config.languages.rust.enable {
       fail-fast = false;
       retries = 4;
     };
+    ".rustfmt.toml".toml = {
+      blank_lines_lower_bound = 1;
+      blank_lines_upper_bound = 2;
+      condense_wildcard_suffixes = true;
+      float_literal_trailing_zero = "IfNoPostfix";
+      format_code_in_doc_comments = true;
+      format_macro_bodies = true;
+      format_macro_matchers = true;
+      format_strings = true;
+      group_imports = "StdExternalCrate";
+      hex_literal_case = "Lower";
+      imports_granularity = "Crate";
+      normalize_comments = true;
+      normalize_doc_attributes = true;
+      overflow_delimited_expr = true;
+      reorder_impl_items = true;
+      unstable_features = true;
+      use_field_init_shorthand = true;
+      use_try_shorthand = true;
+      wrap_comments = true;
+    };
   };
 
   languages.rust.components = lib.mkOptionDefault [ "llvm-tools-preview" ];

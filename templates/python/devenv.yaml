@@ -11,7 +11,6 @@ inputs:
         follows: nixpkgs
   musicaloft-shell:
     url: github:musicaloft/musicaloft-shell
-    flake: false
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
   pyproject-build-systems:

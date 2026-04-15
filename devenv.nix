@@ -21,7 +21,6 @@
     config.programs = {
       kdlfmt.enable = true;
       nixfmt.enable = true;
-      yamlfmt.enable = true;
 
       # for formatting Markdown files
       oxfmt.enable = true;

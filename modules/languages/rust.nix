@@ -29,6 +29,7 @@ lib.mkIf config.languages.rust.enable {
       normalize_doc_attributes = true;
       overflow_delimited_expr = true;
       reorder_impl_items = true;
+      style_edition = "2024";
       unstable_features = true;
       use_field_init_shorthand = true;
       use_try_shorthand = true;
@@ -62,7 +63,6 @@ lib.mkIf config.languages.rust.enable {
   treefmt.config.programs = {
     rustfmt = {
       enable = true;
-      edition = "2024";
       package = toolchain;
     };
     taplo.enable = true;

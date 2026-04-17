@@ -62,6 +62,7 @@ lib.mkIf config.languages.rust.enable {
   treefmt.config.programs = {
     rustfmt = {
       enable = true;
+      edition = "2024";
       package = toolchain;
     };
     taplo.enable = true;

@@ -4,6 +4,9 @@
   pkgs,
   ...
 }:
+let
+  toolchain = config.languages.rust.toolchainPackage;
+in
 lib.mkIf config.languages.rust.enable {
   files = {
     ".cargo/config.toml".toml.alias.cover = "llvm-cov nextest";
@@ -35,21 +38,17 @@ lib.mkIf config.languages.rust.enable {
 
   languages.rust.components = lib.mkOptionDefault [ "llvm-tools-preview" ];
 
-  git-hooks.hooks.clippy =
-    let
-      toolchain = config.languages.rust.toolchainPackage;
-    in
-    {
-      enable = true;
-      packageOverrides = {
-        cargo = toolchain;
-        clippy = toolchain;
-      };
-      settings = {
-        allFeatures = true;
-        denyWarnings = true;
-      };
+  git-hooks.hooks.clippy = {
+    enable = true;
+    packageOverrides = {
+      cargo = toolchain;
+      clippy = toolchain;
     };
+    settings = {
+      allFeatures = true;
+      denyWarnings = true;
+    };
+  };
 
   packages = with pkgs; [
     bacon

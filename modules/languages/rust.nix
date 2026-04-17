@@ -60,7 +60,10 @@ lib.mkIf config.languages.rust.enable {
   ];
 
   treefmt.config.programs = {
-    rustfmt.enable = true;
+    rustfmt = {
+      enable = true;
+      package = toolchain;
+    };
     taplo.enable = true;
   };
 }

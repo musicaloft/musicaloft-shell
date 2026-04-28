@@ -14,13 +14,13 @@ let
   libraryPath = lib.makeLibraryPath buildInputs;
 in
 {
-  # needed for dynamic linking at runtime
-  env.RUSTFLAGS = lib.mkForce "-C link-args=-Wl,-fuse-ld=mold,-rpath,${libraryPath}";
-
   languages.rust = {
     enable = true;
     channel = "nightly";
     mold.enable = true;
+
+    # needed for dynamic linking at runtime
+    rustflags = lib.mkForce "-C link-args=-Wl,-fuse-ld=mold,-rpath,${libraryPath}";
   };
 
   packages = buildInputs ++ nativeBuildInputs;

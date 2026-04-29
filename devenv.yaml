@@ -1,16 +1,23 @@
 inputs:
+  # the conventional commit assistant for generating commits, linting messages, version management, and changelog generation
   cocoa:
     url: github:muni-corn/cocoa
     inputs:
       nixpkgs:
         follows: nixpkgs
+
+  # nix-configured git hooks
   git-hooks:
     url: github:cachix/git-hooks.nix
     inputs:
       nixpkgs:
         follows: nixpkgs
+
+  # for packages to include in development environment
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
+
+  # easy and automatic codebase formatting used by musicaloft-shell
   treefmt-nix:
     url: github:numtide/treefmt-nix
     inputs:

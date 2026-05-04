@@ -1,5 +1,10 @@
 { config, pkgs, ... }:
 {
+  cachix = {
+    pull = [ "municorn" ];
+    push = "municorn";
+  };
+
   languages.python = {
     enable = true;
     lsp.package = pkgs.ty;

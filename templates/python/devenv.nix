@@ -1,9 +1,6 @@
 { config, pkgs, ... }:
 {
-  cachix = {
-    pull = [ "municorn" ];
-    push = "municorn";
-  };
+  cachix.push = "municorn";
 
   languages.python = {
     enable = true;

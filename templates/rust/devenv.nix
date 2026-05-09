@@ -14,10 +14,7 @@ let
   libraryPath = lib.makeLibraryPath buildInputs;
 in
 {
-  cachix = {
-    pull = [ "municorn" ];
-    push = "municorn";
-  };
+  cachix.push = "municorn";
 
   languages.rust = {
     enable = true;

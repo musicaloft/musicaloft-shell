@@ -1,9 +1,6 @@
 { pkgs, ... }:
 {
-  cachix = {
-    pull = [ "municorn" ];
-    push = "municorn";
-  };
+  cachix.push = "municorn";
 
   # your configuration here
   packages = [ pkgs.hello ];

@@ -17,10 +17,10 @@ in
   languages.rust = {
     enable = true;
     channel = "nightly";
-    mold.enable = true;
+    wild.enable = true;
 
     # needed for dynamic linking at runtime
-    rustflags = lib.mkForce "-C link-args=-Wl,-fuse-ld=mold,-rpath,${libraryPath}";
+    rustflags = lib.mkForce "-C link-args=-Wl,-fuse-ld=wild,-rpath,${libraryPath}";
   };
 
   packages = buildInputs ++ nativeBuildInputs;

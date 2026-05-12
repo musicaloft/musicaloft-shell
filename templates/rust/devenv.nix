@@ -14,8 +14,6 @@ let
   libraryPath = lib.makeLibraryPath buildInputs;
 in
 {
-  cachix.push = "municorn";
-
   languages.rust = {
     enable = true;
     channel = "nightly";

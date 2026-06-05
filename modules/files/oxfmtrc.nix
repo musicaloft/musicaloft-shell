@@ -7,10 +7,9 @@
       separateReturnsFromParam = true;
       separateTagGroups = true;
     };
+    printWidth = 100;
     proseWrap = "always";
-    sortImports = {
-      ignoreCase = false;
-    };
+    sortImports.ignoreCase = false;
     sortPackageJson.sortScripts = true;
     sortTailwindcss = { };
   };

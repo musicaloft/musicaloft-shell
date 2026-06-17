@@ -1,0 +1,64 @@
+inputs:
+  # the conventional commit assistant for generating commits, linting messages, version management, and changelog generation
+  cocoa:
+    url: github:muni-corn/cocoa
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # devenv's build system of choice for Rust
+  crate2nix:
+    url: github:nix-community/crate2nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # nix-configured git hooks
+  git-hooks:
+    url: github:cachix/git-hooks.nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # mk-shell-bin
+  mk-shell-bin:
+    url: github:rrbutani/nix-mk-shell-bin
+
+  # provides opinionated code tools and formatting configuration
+  musicaloft-shell:
+    url: github:musicaloft/musicaloft-shell
+
+  # nix2container
+  nix2container:
+    url: github:nlewo/nix2container
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # for packages to include in development environment
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+
+  # up-to-date Rust toolchains, including nightly
+  rust-overlay:
+    url: github:oxalica/rust-overlay
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # easy and automatic codebase formatting used by musicaloft-shell
+  treefmt-nix:
+    url: github:numtide/treefmt-nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+# include musicaloft-shell's opinionated configurations and tools
+imports:
+  - musicaloft-shell
+
+# secrets management
+secretspec:
+  enable: true
+  profile: development
+  provider: pass

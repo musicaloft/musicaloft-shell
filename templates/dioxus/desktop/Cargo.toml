@@ -1,0 +1,14 @@
+[package]
+name = "desktop"
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dioxus = { workspace = true, features = ["router", "fullstack"] }
+ui = { workspace = true }
+
+[features]
+default = []
+desktop = ["dioxus/desktop"]
+server = ["dioxus/server", "ui/server"]

@@ -1,0 +1,12 @@
+[package]
+name = "ui"
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dioxus = { workspace = true }
+api = { workspace = true }
+
+[features]
+server = ["api/server"]

@@ -5,7 +5,10 @@
   ...
 }:
 let
-  musicaloft-web = config.outputs.default;
+  cargo-toml = fromTOML (builtins.readFile ../Cargo.toml);
+  pname = cargo-toml.workspace.package.name;
+
+  build = config.outputs.default;
 
   mkDeployConfig =
     {
@@ -14,7 +17,7 @@ let
       tag,
     }:
     let
-      image = "musicaloft-web:${tag}";
+      image = "${pname}:${tag}";
 
       docker = pkgs.docker.override { clientOnly = true; };
 
@@ -26,9 +29,9 @@ let
 
       containerOptions = {
         inherit tag;
-        name = "musicaloft-web";
+        name = pname;
         created = "now";
-        contents = [ musicaloft-web ];
+        contents = [ build ];
         config = {
           Env = [
             "IP=0.0.0.0"
@@ -37,7 +40,7 @@ let
           ExposedPorts = {
             "8080" = { };
           };
-          Entrypoint = [ "${musicaloft-web}/bin/musicaloft-web" ];
+          Entrypoint = [ "${build}/bin/${pname}" ];
         };
       };
     in
@@ -91,12 +94,12 @@ in
 lib.mkMerge [
   (mkDeployConfig {
     name = "production";
-    app = "musicaloft";
+    app = pname;
     tag = "latest";
   })
   (mkDeployConfig {
     name = "staging";
-    app = "musicaloft-staging";
+    app = "${pname}-staging";
     tag = "staging";
   })
 ]

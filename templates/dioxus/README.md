@@ -1,74 +1,58 @@
 # Development
 
-Your new workspace contains a member crate for each of the web, desktop and mobile platforms, a `ui` crate for shared components and a `api` crate for shared backend logic:
+Your new jumpstart project includes basic organization with an organized `assets` folder and a `components` folder.
+If you chose to develop with the router feature, you will also have a `views` folder.
 
 ```
-your_project/
-├─ README.md
-├─ Cargo.toml
-├─ web/
-│  └─ ... # Web specific UI/logic
-├─ desktop/
-│  └─ ... # Desktop specific UI/logic
-├─ mobile/
-│  └─ ... # Mobile specific UI/logic
-├─ api/
-│  └─ ... # All shared server logic
-└─ ui/
-   └─ ... # Component shared between multiple platforms
-```
-
-## Platform crates
-
-Each platform crate contains the entry point for the platform, and any assets, components and dependencies that are specific to that platform. For example, the desktop crate in the workspace looks something like this:
-
-```
-desktop/ # The desktop crate contains all platform specific UI, logic and dependencies for the desktop app
-├─ assets/ # Assets used by the desktop app - Any platform specific assets should go in this folder
+project/
+├─ assets/ # Any assets that are used by the app should be placed here
 ├─ src/
-│  ├─ main.rs # The entrypoint for the desktop app. It also defines the routes for the desktop platform
-│  ├─ views/ # The views each route will render in the desktop version of the app
+│  ├─ main.rs # The entrypoint for the app. It also defines the routes for the app.
+│  ├─ components/
+│  │  ├─ mod.rs # Defines the components module
+│  │  ├─ hero.rs # The Hero component for use in the home page
+│  │  ├─ echo.rs # The echo component uses server functions to communicate with the server
+│  ├─ views/ # The views each route will render in the app.
 │  │  ├─ mod.rs # Defines the module for the views route and re-exports the components for each route
 │  │  ├─ blog.rs # The component that will render at the /blog/:id route
 │  │  ├─ home.rs # The component that will render at the / route
-├─ Cargo.toml # The desktop crate's Cargo.toml - This should include all desktop specific dependencies
+├─ Cargo.toml # The Cargo.toml file defines the dependencies and feature flags for your project
 ```
 
-When you start developing with the workspace setup each of the platform crates will look almost identical. The UI starts out exactly the same on all platforms. However, as you continue developing your application, this setup makes it easy to let the views for each platform change independently.
+### Automatic Tailwind (Dioxus 0.7+)
 
-## Shared UI crate
+As of Dioxus 0.7, there no longer is a need to manually install tailwind. Simply `dx serve` and you're good to go!
 
-The workspace contains a `ui` crate with components that are shared between multiple platforms. You should put any UI elements you want to use in multiple platforms in this crate. You can also put some shared client side logic in this crate, but be careful to not pull in platform specific dependencies. The `ui` crate starts out something like this:
+Automatic tailwind is supported by checking for a file called `tailwind.css` in your app's manifest directory (next to Cargo.toml). To customize the file, use the dioxus.toml:
 
-```
-ui/
-├─ src/
-│  ├─ lib.rs # The entrypoint for the ui crate
-│  ├─ hero.rs # The Hero component that will be used in every platform
-│  ├─ echo.rs # The shared echo component that communicates with the server
-│  ├─ navbar.rs # The Navbar component that will be used in the layout of every platform's router
+```toml
+[application]
+tailwind_input = "my.css"
+tailwind_output = "assets/out.css"
 ```
 
-## Shared backend logic
+### Tailwind Manual Install
 
-The workspace contains a `api` crate with shared backend logic. This crate defines all the shared server functions for all platforms. Server functions are async functions that expose a public API on the server. They can be called like a normal async function from the client. When you run `dx serve`, all the server functions will be collected in the server build and hosted on a public API for the client to call. The `api` crate starts out something like this:
+To use tailwind plugins or manually customize tailwind, you can can install the Tailwind CLI and use it directly.
 
-```
-api/
-├─ src/
-│  ├─ lib.rs # Exports a server function that echoes the input string
+1. Install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
+2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation/tailwind-cli
+3. Run the following command in the root of the project to start the Tailwind CSS compiler:
+
+```bash
+npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --watch
 ```
 
 ### Serving Your App
 
-Navigate to the platform crate of your choice:
+Run the following command in the root of your project to start developing with the default platform:
 
 ```bash
-cd web
+dx serve --platform web
 ```
 
-and serve:
+To run for a different platform, use the `--platform platform` flag. E.g.
 
 ```bash
-dx serve
+dx serve --platform desktop
 ```

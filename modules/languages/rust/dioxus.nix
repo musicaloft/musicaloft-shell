@@ -56,7 +56,13 @@ let
       src = args.src or (mkSource path (args.extraPaths or [ ]));
       cargoVendorDir = args.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });
 
-      splicedArgs = targetPkgs.callPackage (args.crateExpression or (_: { })) { };
+      # see crane/args.nix for why this doesn't use targetPkgs.callPackage:
+      # its makeOverridable wrapping injects a stray `override` function
+      # into plain attrset results.
+      crateExpression = args.crateExpression or (_: { });
+      splicedArgs = crateExpression (
+        builtins.intersectAttrs (builtins.functionArgs crateExpression) targetPkgs
+      );
       buildInputs = (args.buildInputs or [ ]) ++ (splicedArgs.buildInputs or [ ]);
       extraNativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ (splicedArgs.nativeBuildInputs or [ ]);
 

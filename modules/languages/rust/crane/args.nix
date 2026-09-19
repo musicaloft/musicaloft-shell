@@ -33,11 +33,20 @@ let
 
       src = args.src or (cfg.mkSource path);
 
-      # run the caller's crateExpression through callPackage so that
-      # nixpkgs can splice buildInputs/nativeBuildInputs onto the correct
+      # auto-fill the caller's crateExpression from `pkgs` by parameter
+      # name, the same way `pkgs.callPackage` would, so
+      # buildInputs/nativeBuildInputs are spliced onto the correct
       # build/host/target pkgs when cross-compiling. see:
       # https://crane.dev/examples/cross-rust-overlay.html
-      splicedArgs = pkgs.callPackage (args.crateExpression or (_: { })) { };
+      #
+      # `pkgs.callPackage` itself isn't used here: it wraps every result in
+      # `makeOverridable`, which injects an `override` function into any
+      # attrset it returns -- fine for a package, fatal for a plain
+      # buildInputs/nativeBuildInputs fragment merged into commonArgs.
+      crateExpression = args.crateExpression or (_: { });
+      splicedArgs = crateExpression (
+        builtins.intersectAttrs (builtins.functionArgs crateExpression) pkgs
+      );
 
       features = args.features or [ ];
       cargoExtraArgs = lib.concatStringsSep " " (

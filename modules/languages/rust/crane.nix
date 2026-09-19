@@ -2,6 +2,36 @@
 let
   cfg = config.languages.rust.crane;
 
+  # expands a single cargo workspace member entry into a list of relative
+  # directories. only trailing `/*` globs are supported (e.g. "crates/*"),
+  # which covers the common workspace convention; anything else is
+  # returned as-is.
+  expandMemberGlob =
+    root: pattern:
+    if lib.hasSuffix "/*" pattern then
+      let
+        dir = lib.removeSuffix "/*" pattern;
+      in
+      map (name: "${dir}/${name}") (
+        builtins.attrNames (
+          lib.filterAttrs (_: type: type == "directory") (builtins.readDir (root + "/${dir}"))
+        )
+      )
+    else
+      [ pattern ];
+
+  # resolves the list of member directories for a cargo workspace rooted at
+  # `root`, expanding `workspace.members`/`workspace.exclude` globs.
+  resolveMembers =
+    root:
+    let
+      cargoToml = builtins.fromTOML (builtins.readFile (root + "/Cargo.toml"));
+      expand = lib.concatMap (expandMemberGlob root);
+      members = lib.unique (expand (cargoToml.workspace.members or [ ]));
+      excluded = expand (cargoToml.workspace.exclude or [ ]);
+    in
+    lib.subtractLists excluded members;
+
   # imports a single Cargo package (crate) using crane.
   import' =
     path: args:
@@ -17,6 +47,72 @@ let
         checks = cfg.mkChecks result;
       };
     });
+
+  # imports every member of a cargo workspace using crane, sharing a single
+  # `cargoArtifacts`/`cargoVendorDir` pair (built once, for the whole
+  # workspace with `--all-targets`) across every member package and check.
+  importWorkspace =
+    path: args:
+    let
+      rootCargoToml = builtins.fromTOML (builtins.readFile (path + "/Cargo.toml"));
+    in
+    assert lib.assertMsg (!(rootCargoToml ? package && rootCargoToml ? workspace)) ''
+      languages.rust.crane.importWorkspace: ${toString path}/Cargo.toml defines both
+      [package] and [workspace]. cargo silently operates on just that package unless
+      every invocation passes --workspace, which breaks crane's dependency caching
+      across members. define only [workspace] in the root Cargo.toml instead. see:
+      https://crane.dev/faq/constant-rebuilds.html#mixing-package-and-workspace-definitions-in-the-top-level-cargo-toml
+    '';
+    let
+      members = args.members or (resolveMembers path);
+
+      deps = cfg.mkArgs path (
+        args
+        // {
+          cargoExtraArgs = "--workspace --all-targets " + (args.cargoExtraArgs or "");
+        }
+      );
+
+      buildMember =
+        dir:
+        let
+          inherit (deps.craneLib.crateNameFromCargoToml { cargoToml = path + "/${dir}/Cargo.toml"; })
+            pname
+            version
+            ;
+          memberArgs = cfg.mkArgs path (
+            (builtins.removeAttrs args [ "cargoExtraArgs" ])
+            // {
+              inherit pname version;
+              craneLib = deps.craneLib;
+              cargoArtifacts = deps.cargoArtifacts;
+              cargoVendorDir = deps.cargoVendorDir;
+              cargoExtraArgs = lib.concatStringsSep " " (
+                [
+                  "-p"
+                  pname
+                ]
+                ++ lib.optional (args ? cargoExtraArgs) args.cargoExtraArgs
+              );
+              doCheck = args.doCheck or false;
+            }
+          );
+          pkg = memberArgs.craneLib.buildPackage memberArgs.commonArgs;
+        in
+        lib.nameValuePair pname (
+          pkg.overrideAttrs (old: {
+            passthru = (old.passthru or { }) // {
+              craneLib = memberArgs.craneLib;
+              commonArgs = memberArgs.commonArgs;
+            };
+          })
+        );
+    in
+    {
+      packages = lib.listToAttrs (map buildMember members);
+      deps = deps.cargoArtifacts;
+      checks = cfg.mkChecks deps;
+    };
 in
 {
   imports = [
@@ -63,5 +159,46 @@ in
     '';
   };
 
-  config.languages.rust.crane.import = import';
+  options.languages.rust.crane.importWorkspace = lib.mkOption {
+    type = lib.types.functionTo (lib.types.functionTo lib.types.raw);
+    readOnly = true;
+    description = ''
+      Import every member of a Cargo workspace using crane.
+
+      Workspace members are resolved from the root Cargo.toml's
+      `workspace.members`/`workspace.exclude` (trailing `/*` globs are
+      expanded), or can be given explicitly as a list of relative
+      directories via `args.members`. Dependencies are built exactly
+      once, for the whole workspace with `--all-targets`, and that same
+      `cargoArtifacts`/`cargoVendorDir` pair is reused for every member
+      package and every check.
+
+      Returns an attribute set:
+
+      - `packages`: an attrset of `<crate name> = package` for every
+        workspace member.
+      - `checks`: `clippy`, `doc`, `fmt`, `nextest`, `taplo`, run across
+        the whole workspace.
+      - `deps`: the shared `cargoArtifacts` derivation.
+
+      The root Cargo.toml must define only `[workspace]`; mixing
+      `[package]` and `[workspace]` in the same file breaks crane's
+      cross-derivation caching (see crane's FAQ on constant rebuilds).
+
+      Example usage:
+      ```nix
+      let
+        workspace = config.languages.rust.crane.importWorkspace ./. { };
+      in {
+        languages.rust.enable = true;
+        packages = builtins.attrValues workspace.packages;
+      }
+      ```
+    '';
+  };
+
+  config.languages.rust.crane = {
+    import = import';
+    inherit importWorkspace;
+  };
 }

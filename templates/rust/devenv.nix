@@ -5,12 +5,8 @@
   ...
 }:
 let
-  pname = "a-rust-app";
   buildInputs = [ ];
-  nativeBuildInputs = with pkgs; [
-    autoPatchelfHook
-    pkg-config
-  ];
+  nativeBuildInputs = with pkgs; [ pkg-config ];
   libraryPath = lib.makeLibraryPath buildInputs;
 in
 {
@@ -25,16 +21,5 @@ in
 
   packages = buildInputs ++ nativeBuildInputs;
 
-  outputs.default =
-    let
-      args = {
-        crateOverrides = pkgs.defaultCrateOverrides // {
-          ${pname} = attrs: {
-            inherit buildInputs nativeBuildInputs;
-            runtimeDependencies = buildInputs;
-          };
-        };
-      };
-    in
-    config.languages.rust.import ./. args;
+  outputs.default = config.languages.rust.crane.import ./. { inherit buildInputs nativeBuildInputs; };
 }

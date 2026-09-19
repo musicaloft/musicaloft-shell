@@ -5,8 +5,8 @@
     nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
     musicaloft-shell.url = "github:musicaloft/musicaloft-shell";
 
-    crate2nix = {
-      url = "github:nix-community/crate2nix";
+    crane = {
+      url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

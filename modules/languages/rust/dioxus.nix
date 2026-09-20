@@ -75,8 +75,8 @@ let
           cargoVendorDir
           buildInputs
           ;
-        pname = "${pname}-dioxus-deps";
-        inherit version;
+        # buildDepsOnly appends its own "-deps" pnameSuffix
+        inherit pname version;
         strictDeps = true;
         doCheck = false;
         nativeBuildInputs = extraNativeBuildInputs;

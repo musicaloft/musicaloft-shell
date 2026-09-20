@@ -70,7 +70,7 @@
 
   processes = {
     tailwind = {
-      exec = "${lib.getExe pkgs.tailwindcss_4} -i ./tailwind.css -o ./web/assets/tailwind.css";
+      exec = "${lib.getExe pkgs.tailwindcss_4} -i ./tailwind.css -o ./assets/tailwind.css";
       cwd = config.git.root;
       watch = {
         # watch all crate src dirs so tailwind rebuilds on any component change
@@ -86,7 +86,7 @@
       };
     };
     dx-serve = {
-      exec = "secretspec run -- ${lib.getExe pkgs.dioxus-cli} serve --package app-web";
+      exec = "secretspec run -- ${lib.getExe pkgs.dioxus-cli} serve --package dioxus-app";
       cwd = config.git.root;
       after = [
         "devenv:processes:postgres"

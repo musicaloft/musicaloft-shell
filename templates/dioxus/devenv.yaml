@@ -6,9 +6,9 @@ inputs:
       nixpkgs:
         follows: nixpkgs
 
-  # devenv's build system of choice for Rust
-  crate2nix:
-    url: github:nix-community/crate2nix
+  # musicaloft-shell's build system of choice for Rust
+  crane:
+    url: github:ipetkov/crane
     inputs:
       nixpkgs:
         follows: nixpkgs

@@ -21,12 +21,13 @@
         }
       );
 
-      wasm-bindgen-cli_0_2_121 =
+      # must match the wasm-bindgen version pinned in Cargo.lock exactly
+      wasm-bindgen-cli_0_2_128 =
         let
           src = final.fetchCrate {
             pname = "wasm-bindgen-cli";
-            version = "0.2.121";
-            hash = "sha256-ZOMgFNOcGkO66Jz/Z83eoIu+DIzo3Z/vq6Z5g6BDY/w=";
+            version = "0.2.128";
+            hash = "sha256-a7lcXJnnZkYReja+iUO7NqqrWyv3toxnUgQb8s4IS5s=";
           };
         in
         final.buildWasmBindgenCli {
@@ -34,7 +35,7 @@
           cargoDeps = prev.rustPlatform.fetchCargoVendor {
             inherit src;
             inherit (src) pname version;
-            hash = "sha256-DPdCDPTAPBrbqLUqnCwQu1dePs9lGg85JCJOCIr9qjU=";
+            hash = "sha256-R1Tas33Ursy8kqsxguAkG0ZhNed2n5uFTAhw1l2qlLY=";
           };
         };
     })

@@ -42,7 +42,7 @@
     cargo-watch
     dioxus-cli
     flyctl
-    wasm-bindgen-cli_0_2_121
+    wasm-bindgen-cli_0_2_128
   ];
 
   services = {

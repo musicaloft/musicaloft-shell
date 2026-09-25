@@ -28,15 +28,13 @@ let
         version
         ;
 
+      tailwind = cfg.mkTailwindSteps path;
+
       # Dioxus.toml is already covered by crane's toml filter; assets are
       # read by the `asset!` macro at compile time
       src =
         args.src or (craneCfg.mkSource path {
-          extraPaths = [
-            "assets"
-          ]
-          ++ lib.optional cfg.tailwind.enable cfg.tailwind.input
-          ++ (args.extraPaths or [ ]);
+          extraPaths = [ "assets" ] ++ tailwind.extraPaths ++ (args.extraPaths or [ ]);
           extraFileTypes = args.extraFileTypes or [ ];
         });
       cargoVendorDir = args.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });
@@ -95,7 +93,7 @@ let
           pkgs.binaryen
           pkgs.makeWrapper
         ]
-        ++ lib.optional cfg.tailwind.enable cfg.tailwind.package
+        ++ tailwind.nativeBuildInputs
         ++ extraNativeBuildInputs;
 
         buildPhaseCargoCommand = ''
@@ -105,10 +103,7 @@ let
           # tell dx to use the PATH wasm-opt instead of downloading its own copy
           export NO_DOWNLOADS=1
 
-          ${lib.optionalString cfg.tailwind.enable ''
-            mkdir -p "$(dirname ${lib.escapeShellArg cfg.tailwind.output})"
-            tailwindcss -i ${lib.escapeShellArg cfg.tailwind.input} -o ${lib.escapeShellArg cfg.tailwind.output} --minify
-          ''}
+          ${tailwind.preBundle}
 
           fakeOptDir="$TMPDIR/fake-wasm-opt"
           mkdir -p "$fakeOptDir"
@@ -116,6 +111,8 @@ let
           export PATH="$fakeOptDir:$PATH"
 
           dx bundle --package ${pname} --release --fullstack --locked --offline ${dxTargetArgs} ${args.dxExtraArgs or ""}
+
+          ${tailwind.postBundle}
 
           # run the real wasm-opt on the bundled wasm without --enable-threads
           wasm=$(find "target/dx/${pname}/release/web/public/assets" -name '*.wasm' -print -quit)
@@ -147,6 +144,8 @@ let
     );
 in
 {
+  imports = [ ./dioxus/tailwind.nix ];
+
   options.languages.rust.dioxus = {
     enable = lib.mkEnableOption "building fullstack Dioxus apps with crane and `dx bundle`";
 
@@ -173,34 +172,6 @@ in
       type = lib.types.str;
       default = "wasm32-unknown-unknown";
       description = "The cargo target triple used to build the web client.";
-    };
-
-    tailwind = {
-      enable = lib.mkEnableOption "pre-generating a Tailwind CSS bundle before `dx bundle` runs";
-
-      package = lib.mkOption {
-        type = lib.types.package;
-        default = pkgs.tailwindcss_4;
-        defaultText = lib.literalExpression "pkgs.tailwindcss_4";
-        description = "The `tailwindcss` package used to pre-generate CSS.";
-      };
-
-      input = lib.mkOption {
-        type = lib.types.str;
-        default = "tailwind.css";
-        description = "Path (relative to the project root) of the Tailwind input stylesheet.";
-      };
-
-      output = lib.mkOption {
-        type = lib.types.str;
-        default = "assets/tailwind.css";
-        description = ''
-          Path (relative to the project root) to write the generated
-          stylesheet to. Dioxus's `asset!` macro validates this path exists
-          at compile time, so it must match wherever the app's `asset!`
-          call points.
-        '';
-      };
     };
 
     import = lib.mkOption {

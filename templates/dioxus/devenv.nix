@@ -37,7 +37,6 @@
         enable = true;
         # must match the wasm-bindgen version pinned in Cargo.lock exactly
         wasmBindgenPackage = pkgs.wasm-bindgen-cli_0_2_128;
-        tailwind.enable = true;
       };
     };
   };

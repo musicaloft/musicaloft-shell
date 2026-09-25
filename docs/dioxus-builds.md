@@ -17,7 +17,6 @@ apps on top of the crane integration described in
       enable = true;
       # must match the wasm-bindgen version pinned in Cargo.lock exactly
       wasmBindgenPackage = pkgs.wasm-bindgen-cli_0_2_128;
-      tailwind.enable = true; # if your project uses Tailwind
     };
   };
 
@@ -70,9 +69,14 @@ using dx's `@client`/`@server` target-override syntax (dx ≥0.7). See
   binaryen's thread pool spawning is blocked by the seccomp profile. A
   passthrough stub intercepts it so `dx bundle` succeeds, then a real
   `wasm-opt -Oz` pass runs afterwards with threading disabled.
-- If `tailwind.enable` is set, the Tailwind stylesheet is pre-generated
-  before `dx bundle` runs, since Dioxus's `asset!` macro validates the
-  asset path exists at compile time.
+- `dx bundle` runs Tailwind itself, but ignores its failures. For projects
+  dx detects as using Tailwind (a `tailwind.css` or
+  `tailwind.config.js`/`.ts` next to `Cargo.toml`), the build empties the
+  output stylesheet before bundling and fails loudly if dx didn't
+  regenerate it, rerunning `tailwindcss` to show the actual error. Input
+  and output paths follow `tailwind_input`/`tailwind_output` in
+  `Dioxus.toml`, and `languages.rust.dioxus.tailwind.package` picks the
+  Tailwind version.
 
 ## Known caveats
 

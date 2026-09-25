@@ -56,6 +56,10 @@ outputs = {
 - `features`, `noDefaultFeatures`, `allFeatures` — folded into
   `cargoExtraArgs` consistently between the dependency build and every
   check, avoiding the feature-mismatch rebuilds crane's FAQ warns about.
+- `locked` (default `true`) — passes `--locked` to cargo. crane's own
+  `--locked` default disappears as soon as `cargoExtraArgs` is set, and
+  cargo rejects the flag if it's given twice, so toggle this rather than
+  editing `--locked` in `cargoExtraArgs` by hand.
 - `crossSystem` — a Nixpkgs `crossSystem` value to cross-compile for.
 - `crateExpression` — a `pkgs.callPackage`-style function returning extra
   `buildInputs`/`nativeBuildInputs`, spliced onto the correct

@@ -10,6 +10,7 @@ let
     "features"
     "noDefaultFeatures"
     "allFeatures"
+    "locked"
     "cargoExtraArgs"
     "src"
   ];
@@ -49,8 +50,13 @@ let
       );
 
       features = args.features or [ ];
+
+      # setting cargoExtraArgs at all replaces crane's own "--locked"
+      # default, so it's re-added here unless the caller opts out. cargo
+      # rejects the flag twice, hence an option instead of a raw flag.
       cargoExtraArgs = lib.concatStringsSep " " (
-        lib.optional (args.noDefaultFeatures or false) "--no-default-features"
+        lib.optional (args.locked or true) "--locked"
+        ++ lib.optional (args.noDefaultFeatures or false) "--no-default-features"
         ++ lib.optional (args.allFeatures or false) "--all-features"
         ++ lib.optional (features != [ ]) "--features ${lib.concatStringsSep "," features}"
         ++ lib.optional (args ? cargoExtraArgs) args.cargoExtraArgs
@@ -67,8 +73,8 @@ let
       // {
         buildInputs = (extra.buildInputs or [ ]) ++ (splicedArgs.buildInputs or [ ]);
         nativeBuildInputs = (extra.nativeBuildInputs or [ ]) ++ (splicedArgs.nativeBuildInputs or [ ]);
-      }
-      // lib.optionalAttrs (cargoExtraArgs != "") { inherit cargoExtraArgs; };
+        inherit cargoExtraArgs;
+      };
 
       cargoArtifacts = commonArgs.cargoArtifacts or (craneLib.buildDepsOnly commonArgs);
       cargoVendorDir = commonArgs.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });

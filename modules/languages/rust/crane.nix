@@ -164,6 +164,9 @@ in
       - `features`, `noDefaultFeatures`, `allFeatures`: cargo feature
         flags, folded into `cargoExtraArgs` consistently across the
         dependency build and every check.
+      - `locked` (default `true`): pass `--locked` to cargo. Set this to
+        `false` rather than adding or removing `--locked` in
+        `cargoExtraArgs` yourself.
 
       Example usage:
       ```nix

@@ -4,11 +4,11 @@
       dioxus-cli = prev.dioxus-cli.overrideAttrs (
         _:
         let
-          version = "0.7.9";
+          version = "0.7.10";
           src = final.fetchCrate {
             pname = "dioxus-cli";
             inherit version;
-            hash = "sha256-tLMtUlohSJt3okdJh+ARweQNGmzj/vYiNl8iZhDbSAc=";
+            hash = "sha256-kPzo5zRSVs46SjiDRKpKxca8kPcWUgqc/LMKQsk0sC8=";
           };
         in
         {
@@ -16,7 +16,7 @@
           cargoDeps = final.rustPlatform.fetchCargoVendor {
             inherit src;
             inherit (src) pname version;
-            hash = "sha256-h5wkxHP8ehZLHqcUsro08/dpqSPnPuBbZuUGG8i4nBc=";
+            hash = "sha256-cvBVIkIqBjXFifYNpL2DqZpQcBaX/59Xw0ZJKUvUcIs=";
           };
         }
       );

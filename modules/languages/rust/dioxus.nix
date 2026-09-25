@@ -148,6 +148,8 @@ let
             --set-default IP 0.0.0.0 \
             --set-default PORT 8080
         '';
+
+        meta.mainProgram = pname;
       }
       // lib.optionalAttrs (args ? env) { inherit (args) env; }
     );

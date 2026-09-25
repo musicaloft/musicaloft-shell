@@ -23,7 +23,11 @@ let
       # devenv evaluates the working tree directly rather than a git
       # checkout, so local build outputs (build-script `.rs` files under
       # target/, generated toml under .devenv/) would otherwise match the
-      # filters above and churn the source hash on every local build
+      # filters above and churn the source hash on every local build.
+      #
+      # symlinks are excluded too: devenv's `files` option (e.g. the
+      # generated .cargo/config.toml and .rustfmt.toml) creates symlinks
+      # into the nix store, which dangle inside the build sandbox
       localOutputs = lib.fileset.unions (
         map (p: lib.fileset.maybeMissing (root + "/${p}")) [
           "target"
@@ -31,6 +35,7 @@ let
           ".direnv"
           "result"
         ]
+        ++ [ (lib.fileset.fileFilter (file: file.type == "symlink") root) ]
       );
     in
     lib.fileset.toSource {

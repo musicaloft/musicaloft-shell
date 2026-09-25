@@ -227,19 +227,30 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = builtins.elem cfg.clientTarget config.languages.rust.targets;
-        message = ''
-          languages.rust.dioxus requires '${cfg.clientTarget}' in languages.rust.targets
-          so the toolchain can build the web client.
-        '';
-      }
-    ];
+  config = lib.mkMerge [
+    {
+      # defined unconditionally so forgetting `enable` gets a clear error
+      # instead of an undefined option
+      languages.rust.dioxus.import =
+        path: args:
+        lib.throwIfNot cfg.enable ''
+          languages.rust.dioxus.import was called, but languages.rust.dioxus.enable isn't set.
+          set `languages.rust.dioxus.enable = true;` so the dioxus cli and wasm target checks are set up.
+        '' (import' path args);
+    }
 
-    packages = [ cfg.cliPackage ];
+    (lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = builtins.elem cfg.clientTarget config.languages.rust.targets;
+          message = ''
+            languages.rust.dioxus requires '${cfg.clientTarget}' in languages.rust.targets
+            so the toolchain can build the web client.
+          '';
+        }
+      ];
 
-    languages.rust.dioxus.import = import';
-  };
+      packages = [ cfg.cliPackage ];
+    })
+  ];
 }

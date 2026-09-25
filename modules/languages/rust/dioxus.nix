@@ -8,17 +8,13 @@ let
   cfg = config.languages.rust.dioxus;
   craneCfg = config.languages.rust.crane;
 
-  # builds a fullstack Dioxus bundle: a dual-target (server + wasm client)
-  # cargoArtifacts derivation feeding a single `dx bundle --fullstack` run.
+  # builds a fullstack Dioxus bundle with a single `dx bundle --fullstack`
+  # run, which drives cargo itself for both the server and wasm client.
   #
-  # dx drives cargo directly for both targets, so unlike a typical crane
-  # package we cannot let `craneLib.buildDepsOnly` infer a single target on
-  # its own; instead its build command is overridden to warm the cache for
-  # both. for that cache to actually be reused by `dx bundle`, the feature
-  # flags used here must match what dx itself passes for each side (see
-  # `serverFeatures`/`clientFeatures`) -- if they ever drift, `dx bundle`
-  # still succeeds, it just falls back to compiling the mismatched crates
-  # itself.
+  # there's deliberately no crane `buildDepsOnly` step: dx compiles each
+  # side under its own generated cargo profile (`server-release`,
+  # `web-release`), so dependencies prebuilt under any other profile would
+  # never be reused and would only add a second full dependency build.
   import' =
     path: args:
     let
@@ -49,34 +45,6 @@ let
       buildInputs = (args.buildInputs or [ ]) ++ splicedArgs.buildInputs;
       extraNativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ splicedArgs.nativeBuildInputs;
 
-      serverFeatureArgs = "--no-default-features --features ${lib.concatStringsSep "," cfg.serverFeatures}";
-      clientFeatureArgs = "--no-default-features --features ${lib.concatStringsSep "," cfg.clientFeatures}";
-
-      depsArgs = {
-        inherit
-          src
-          cargoVendorDir
-          buildInputs
-          ;
-        # buildDepsOnly appends its own "-deps" pnameSuffix
-        inherit pname version;
-        strictDeps = true;
-        doCheck = false;
-        nativeBuildInputs = extraNativeBuildInputs;
-
-        # build (and check) dependencies for both the server and wasm
-        # client targets, so a single cargoArtifacts output warms the
-        # cache dx will consume for both sides of the fullstack build.
-        buildPhaseCargoCommand = ''
-          cargo check --profile release --target ${serverTarget} ${serverFeatureArgs}
-          cargo build --profile release --target ${serverTarget} ${serverFeatureArgs}
-          cargo check --profile release --target ${cfg.clientTarget} ${clientFeatureArgs}
-          cargo build --profile release --target ${cfg.clientTarget} ${clientFeatureArgs}
-        '';
-      };
-
-      cargoArtifacts = args.cargoArtifacts or (craneLib.buildDepsOnly depsArgs);
-
       # dx bundle's wasm-opt invocation SIGABRTs under the nix sandbox
       # because binaryen's thread pool spawning is blocked by the seccomp
       # profile. intercept it with a passthrough stub so dx succeeds, then
@@ -106,13 +74,14 @@ let
       {
         inherit
           src
-          cargoArtifacts
           cargoVendorDir
           pname
           version
           buildInputs
           ;
 
+        # see above for why nothing is prebuilt
+        cargoArtifacts = null;
         strictDeps = true;
         doInstallCargoArtifacts = false;
 
@@ -202,29 +171,6 @@ in
       description = "The cargo target triple used to build the web client.";
     };
 
-    serverFeatures = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ "server" ];
-      description = ''
-        Cargo features to build the server binary with (via
-        `--no-default-features --features ...`), matching whatever `dx
-        bundle --fullstack` uses to select its server-side code. Must stay
-        in sync with dx's own feature selection for the dependency cache to
-        be reused; see the `dioxus new` project template's `[features]`
-        table for the convention this follows.
-      '';
-    };
-
-    clientFeatures = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ "web" ];
-      description = ''
-        Cargo features to build the web client with (via
-        `--no-default-features --features ...`), matching whatever `dx
-        bundle --fullstack` uses to select its client-side code.
-      '';
-    };
-
     tailwind = {
       enable = lib.mkEnableOption "pre-generating a Tailwind CSS bundle before `dx bundle` runs";
 
@@ -257,8 +203,8 @@ in
       type = lib.types.functionTo (lib.types.functionTo lib.types.package);
       readOnly = true;
       description = ''
-        Import a fullstack Dioxus project, building it with `dx bundle
-        --fullstack` on top of crane-cached dependency artifacts.
+        Import a fullstack Dioxus project, building it with a single `dx
+        bundle --fullstack` run inside a crane derivation.
 
         This function takes a path to a directory containing the project's
         Cargo.toml and Dioxus.toml, and returns a derivation with

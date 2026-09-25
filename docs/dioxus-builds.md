@@ -25,44 +25,24 @@ apps on top of the crane integration described in
 }
 ```
 
-`languages.rust.dioxus.import` builds a fullstack Dioxus app with `dx
-bundle --fullstack` on top of crane-cached dependency artifacts. The
-result has `$out/bin/<pname>` (the server binary, wrapped with
-`IP`/`PORT` defaults) alongside `$out/bin/public` (the prebuilt web
-assets).
+`languages.rust.dioxus.import` builds a fullstack Dioxus app with a
+single `dx bundle --fullstack` run. The result has `$out/bin/<pname>`
+(the server binary, wrapped with `IP`/`PORT` defaults) alongside
+`$out/bin/public` (the prebuilt web assets).
 
-## Why this needs its own builder
+## Why there's no dependency cache
 
-`dx bundle --fullstack` drives cargo directly for two targets — the
-native server and the wasm client — in one invocation. crane's
-`buildDepsOnly` only warms one target by default, so this builder
-overrides its build command to compile dependencies for **both** targets
-into a single `cargoArtifacts` output before `dx bundle` ever runs.
+`dx bundle --fullstack` drives cargo itself for two targets, the native
+server and the wasm client, and builds each under its own generated
+cargo profile (`server-release` and `web-release`). Cargo keeps a
+separate `target/<profile>/` directory per profile, so dependencies
+prebuilt by a crane `buildDepsOnly` step under any other profile are
+never reused; `dx` recompiles them all anyway, and the prebuild only adds
+a second full dependency build.
 
-For that cache to actually help, the feature flags used to warm each
-target must match what `dx` itself uses internally:
-`languages.rust.dioxus.serverFeatures`/`.clientFeatures` default to
-`[ "server" ]`/`[ "web" ]`, matching the `dioxus new` project template's
-`[features]` convention (`default = ["web"]`, plus optional
-`server`/`desktop`/`mobile` features gating each platform's `dioxus`
-feature). If your project's features drift from that convention, update
-these options to match.
-
-**This warming is inherently best-effort, and in practice buys less than
-the equivalent `crane.import`/`importWorkspace` caching does.** `dx`
-builds each platform under its own generated cargo profile (observed as
-`server-release`/`web-release`, each `inherits = "release"`), which lives
-in its own `target/<profile>/` directory — a detail of `dx`'s `pub(crate)`
-internals, not a stable interface. This module's warming step uses the
-plain `release` profile instead, so `dx bundle`'s own invocation ends up
-compiling most dependency crates itself regardless, even though the
-`cargoArtifacts` derivation itself stays stable (and thus skips a
-redundant _nix-level_ rebuild/cache-download) across unrelated changes.
-If `dx` ever exposes its per-platform profile names as something other
-than an implementation detail, warming with the matching profile would
-close this gap; until then, treat the wasm/server dependency warm-up here
-as reducing eval/store-level churn rather than as a guarantee that `dx
-bundle` itself skips recompiling dependencies.
+Because of that, every change to the project's sources rebuilds the whole
+bundle, dependencies included. The source filter still keeps unrelated
+edits (`devenv.nix`, `README.md`, ...) from triggering a rebuild at all.
 
 ## Cross-compiling the server
 

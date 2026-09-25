@@ -5,8 +5,7 @@
   ...
 }:
 let
-  cargo-toml = fromTOML (builtins.readFile ../Cargo.toml);
-  pname = cargo-toml.workspace.package.name;
+  pname = (lib.importTOML ../Cargo.toml).package.name;
 
   build = config.outputs.default;
 

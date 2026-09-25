@@ -95,6 +95,12 @@ let
           # makeWrapper's bash script, whose shebang points at the build
           # platform's bash (and which would need bash in container images)
           targetPkgs.makeBinaryWrapper
+          # std's panic locations and dependencies' file!() paths otherwise
+          # keep the whole toolchain and every vendored crate in the runtime
+          # closure; craneLib.buildPackage adds these hooks, but
+          # mkCargoDerivation doesn't
+          craneLib.removeReferencesToRustToolchainHook
+          craneLib.removeReferencesToVendoredSourcesHook
         ]
         ++ tailwind.nativeBuildInputs
         ++ extraNativeBuildInputs;

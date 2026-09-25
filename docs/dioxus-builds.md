@@ -29,6 +29,12 @@ single `dx bundle --fullstack` run. The result has `$out/bin/<pname>`
 (the server binary, wrapped with `IP`/`PORT` defaults) alongside
 `$out/bin/public` (the prebuilt web assets).
 
+Enabling `languages.rust.dioxus` also puts `dx` and the tools it expects
+on `PATH` in the dev shell: `wasm-bindgen` (from `wasmBindgenPackage`),
+`tailwindcss` (from `tailwind.package`), and binaryen's `wasm-opt`.
+nixpkgs builds `dx` without its self-download feature, so `dx serve`
+relies on these.
+
 ## Why there's no dependency cache
 
 `dx bundle --fullstack` drives cargo itself for two targets, the native

@@ -216,7 +216,14 @@ in
         }
       ];
 
-      packages = [ cfg.cliPackage ];
+      # nixpkgs builds dx with `no-downloads`, so `dx serve` and local
+      # `dx bundle` runs look these up on PATH instead of fetching them
+      packages = [
+        cfg.cliPackage
+        cfg.wasmBindgenPackage
+        cfg.tailwind.package
+        pkgs.binaryen
+      ];
     })
   ];
 }

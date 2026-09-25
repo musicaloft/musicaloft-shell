@@ -66,6 +66,10 @@ let
     let
       members = args.members or (resolveMembers path);
 
+      # everything but `members` is forwarded to crane, and from there into
+      # the derivation's environment
+      buildArgs = builtins.removeAttrs args [ "members" ];
+
       # `--all-targets` is deliberately left out: buildDepsOnly already adds
       # it to its `cargo check` (doCheck defaults to true there), cargo
       # rejects the flag twice, and `cargo doc` rejects it outright.
@@ -76,7 +80,7 @@ let
           pname = rootCargoToml.workspace.metadata.crane.name or "workspace";
           version = rootCargoToml.workspace.package.version or "0.0.0";
         }
-        // args
+        // buildArgs
         // {
           cargoExtraArgs = "--workspace " + (args.cargoExtraArgs or "");
         }
@@ -99,7 +103,7 @@ let
             else
               rootCargoToml.workspace.package.version or "0.0.0";
           memberArgs = cfg.mkArgs path (
-            (builtins.removeAttrs args [ "cargoExtraArgs" ])
+            (builtins.removeAttrs buildArgs [ "cargoExtraArgs" ])
             // {
               inherit pname version;
               craneLib = deps.craneLib;

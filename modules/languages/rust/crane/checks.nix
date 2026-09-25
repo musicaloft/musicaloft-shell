@@ -18,6 +18,14 @@ let
       baseArgs = commonArgs // {
         inherit cargoArtifacts;
       };
+
+      # formatters only need the source, but keep any explicit name so
+      # their derivations aren't named after crane's placeholder
+      formatArgs = builtins.intersectAttrs {
+        src = null;
+        pname = null;
+        version = null;
+      } commonArgs;
     in
     {
       clippy = craneLib.cargoClippy (
@@ -29,7 +37,7 @@ let
 
       doc = craneLib.cargoDoc baseArgs;
 
-      fmt = craneLib.cargoFmt { inherit (commonArgs) src; };
+      fmt = craneLib.cargoFmt formatArgs;
 
       # nextest fails outright when there's nothing to run, which would
       # break the check for freshly generated crates with no tests yet
@@ -40,7 +48,7 @@ let
         }
       );
 
-      taplo = craneLib.taploFmt { inherit (commonArgs) src; };
+      taplo = craneLib.taploFmt formatArgs;
     };
 in
 {

@@ -66,10 +66,13 @@ let
     let
       members = args.members or (resolveMembers path);
 
+      # `--all-targets` is deliberately left out: buildDepsOnly already adds
+      # it to its `cargo check` (doCheck defaults to true there), cargo
+      # rejects the flag twice, and `cargo doc` rejects it outright.
       deps = cfg.mkArgs path (
         args
         // {
-          cargoExtraArgs = "--workspace --all-targets " + (args.cargoExtraArgs or "");
+          cargoExtraArgs = "--workspace " + (args.cargoExtraArgs or "");
         }
       );
 

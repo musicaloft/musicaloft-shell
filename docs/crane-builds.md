@@ -158,11 +158,6 @@ derivations by hand instead of going through `import`/`importWorkspace`.
 
 ## Known caveats
 
-- **Source naming sensitivity.** `mkSource` uses `lib.fileset.toSource`,
-  which (unlike `craneLib.cleanCargoSource`) names its output after the
-  root directory's basename. Renaming a checkout directory changes the
-  resulting store path's derivation inputs, though not usually the build
-  outcome.
 - **Workspace member globs.** `importWorkspace`'s member resolution only
   expands a single trailing `/*` (e.g. `"crates/*"`), matching the common
   convention. Nested or multi-level globs aren't expanded — pass

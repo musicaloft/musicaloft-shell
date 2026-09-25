@@ -94,4 +94,4 @@ using dx's `@client`/`@server` target-override syntax (dx ≥0.7). See
   builder; compose `crane.importWorkspace` with your own `dx` invocation
   instead.
 - The crane caveats in [crane-builds.md](./crane-builds.md#known-caveats)
-  (such as source naming sensitivity) apply here too.
+  apply here too.

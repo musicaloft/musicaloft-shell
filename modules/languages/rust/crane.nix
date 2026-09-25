@@ -109,7 +109,7 @@ let
             (builtins.removeAttrs buildArgs [ "cargoExtraArgs" ])
             // {
               inherit pname version;
-              craneLib = deps.craneLib;
+              inherit (deps) pkgs craneLib;
               cargoArtifacts = deps.cargoArtifacts;
               cargoVendorDir = deps.cargoVendorDir;
               cargoExtraArgs = lib.concatStringsSep " " (

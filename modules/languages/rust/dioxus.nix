@@ -44,8 +44,8 @@ let
     path: args:
     let
       crossSystem = args.crossSystem or null;
-      craneLib = craneCfg.mkLib { inherit crossSystem; };
       targetPkgs = craneCfg.mkPkgs { inherit crossSystem; };
+      craneLib = craneCfg.mkLib { pkgs = targetPkgs; };
       serverTarget = targetPkgs.stdenv.hostPlatform.rust.rustcTarget;
 
       inherit (craneLib.crateNameFromCargoToml { cargoToml = path + "/Cargo.toml"; })

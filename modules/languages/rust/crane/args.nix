@@ -5,6 +5,7 @@ let
   # keys consumed by `mkArgs` itself, rather than forwarded to crane.
   consumedKeys = [
     "crossSystem"
+    "pkgs"
     "craneLib"
     "crateExpression"
     "features"
@@ -29,8 +30,10 @@ let
   mkArgs =
     path: args:
     let
-      craneLib = args.craneLib or (cfg.mkLib { crossSystem = args.crossSystem or null; });
-      pkgs = cfg.mkPkgs { crossSystem = args.crossSystem or null; };
+      # instantiated once and shared with mkLib, since cross builds
+      # re-import nixpkgs on every call
+      pkgs = args.pkgs or (cfg.mkPkgs { crossSystem = args.crossSystem or null; });
+      craneLib = args.craneLib or (cfg.mkLib { inherit pkgs; });
 
       src = args.src or (cfg.mkSource path);
 

@@ -8,27 +8,6 @@ let
   cfg = config.languages.rust.dioxus;
   craneCfg = config.languages.rust.crane;
 
-  # builds a source derivation covering everything a Dioxus fullstack
-  # build might read: the usual crane/cargo files, plus assets, migrations,
-  # and the framework's own config files, none of which
-  # `craneLib.fileset.commonCargoSources` tracks on its own.
-  mkSource =
-    path: extraPaths:
-    lib.fileset.toSource {
-      root = path;
-      fileset = lib.fileset.unions (
-        [
-          (craneCfg.lib.fileset.commonCargoSources path)
-          (lib.fileset.maybeMissing (path + "/assets"))
-          (lib.fileset.maybeMissing (path + "/migrations"))
-          (lib.fileset.maybeMissing (path + "/Dioxus.toml"))
-          (lib.fileset.maybeMissing (path + "/diesel.toml"))
-        ]
-        ++ lib.optional cfg.tailwind.enable (lib.fileset.maybeMissing (path + "/${cfg.tailwind.input}"))
-        ++ map (p: lib.fileset.maybeMissing (path + "/${p}")) extraPaths
-      );
-    };
-
   # builds a fullstack Dioxus bundle: a dual-target (server + wasm client)
   # cargoArtifacts derivation feeding a single `dx bundle --fullstack` run.
   #
@@ -53,7 +32,17 @@ let
         version
         ;
 
-      src = args.src or (mkSource path (args.extraPaths or [ ]));
+      # Dioxus.toml is already covered by crane's toml filter; assets are
+      # read by the `asset!` macro at compile time
+      src =
+        args.src or (craneCfg.mkSource path {
+          extraPaths = [
+            "assets"
+          ]
+          ++ lib.optional cfg.tailwind.enable cfg.tailwind.input
+          ++ (args.extraPaths or [ ]);
+          extraFileTypes = args.extraFileTypes or [ ];
+        });
       cargoVendorDir = args.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });
 
       splicedArgs = craneCfg.spliceCrateExpression targetPkgs (args.crateExpression or (_: { }));
@@ -284,9 +273,9 @@ in
         - `crateExpression`: a `pkgs.callPackage`-style function returning
           extra `buildInputs`/`nativeBuildInputs`, spliced onto the correct
           build/host/target `pkgs` when cross-compiling.
-        - `extraPaths`: additional project-relative paths to keep in the
-          source filter (beyond `assets/`, `migrations/`, `Dioxus.toml`,
-          and `diesel.toml`, which are always included if present).
+        - `extraPaths`, `extraFileTypes`: extra files to keep in the source
+          filter, as for `languages.rust.crane.import`. `assets/` and toml
+          files (including `Dioxus.toml`) are always included.
         - `dxExtraArgs`: extra arguments appended to the `dx bundle`
           invocation.
 

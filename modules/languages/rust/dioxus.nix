@@ -43,34 +43,19 @@ let
       buildInputs = (args.buildInputs or [ ]) ++ splicedArgs.buildInputs;
       extraNativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ splicedArgs.nativeBuildInputs;
 
-      # dx bundle's wasm-opt invocation SIGABRTs under the nix sandbox
-      # because binaryen's thread pool spawning is blocked by the seccomp
-      # profile. intercept it with a passthrough stub so dx succeeds, then
-      # run a real wasm-opt pass afterwards with threading disabled.
-      wasmOptStub = pkgs.writeShellScript "fake-wasm-opt" ''
-        input=""
-        output=""
-        next_is_output=0
-        for arg in "$@"; do
-          if [ "$next_is_output" = 1 ]; then
-            output="$arg"
-            next_is_output=0
-          elif [ "$arg" = "-o" ]; then
-            next_is_output=1
-          elif [ -f "$arg" ]; then
-            input="$arg"
-          fi
-        done
-        if [ -n "$input" ] && [ -n "$output" ] && [ "$input" != "$output" ]; then
-          cp "$input" "$output"
-        fi
-      '';
-
       # the platform flags matter: an explicit @server only overrides dx's
       # bundle format, so without --server it autodetects the platform from
       # default features (usually "web") and builds the server with the web
       # renderer, which panics at startup
-      dxTargetArgs = "@client --web --target ${cfg.clientTarget} @server --server --target ${serverTarget}";
+      #
+      # --debug-symbols defaults to true even for release builds, which makes
+      # dx run wasm-opt with --debuginfo. binaryen aborts on that for
+      # typical dioxus modules, and dx then silently ships the unoptimized
+      # wasm (about 2.5x larger for the template).
+      dxTargetArgs = lib.concatStringsSep " " [
+        "@client --web --target ${cfg.clientTarget} --debug-symbols=false"
+        "@server --server --target ${serverTarget}"
+      ];
     in
     craneLib.mkCargoDerivation (
       {
@@ -113,28 +98,9 @@ let
           export NO_DOWNLOADS=1
 
           ${tailwind.preBundle}
-
-          fakeOptDir="$TMPDIR/fake-wasm-opt"
-          mkdir -p "$fakeOptDir"
-          ln -sf ${wasmOptStub} "$fakeOptDir/wasm-opt"
-          export PATH="$fakeOptDir:$PATH"
-
           dx bundle --package ${pname} --release --fullstack --locked --offline ${dxTargetArgs} ${args.dxExtraArgs or ""}
 
           ${tailwind.postBundle}
-
-          # run the real wasm-opt on the bundled wasm without --enable-threads
-          wasm=$(find "target/dx/${pname}/release/web/public/assets" -name '*.wasm' -print -quit)
-          if [ -n "$wasm" ]; then
-            wasmTmp=$(mktemp "$TMPDIR/wasm-opt-XXXXXX.wasm")
-            wasm-opt "$wasm" -Oz -o "$wasmTmp" \
-              --enable-reference-types \
-              --enable-bulk-memory \
-              --enable-mutable-globals \
-              --enable-nontrapping-float-to-int \
-              --strip-debug
-            mv "$wasmTmp" "$wasm"
-          fi
         '';
 
         installPhaseCommand = ''

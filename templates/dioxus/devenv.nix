@@ -51,29 +51,6 @@
     wasm-bindgen-cli_0_2_128
   ];
 
-  services = {
-    # connect via $PGHOST env var
-    postgres = {
-      enable = true;
-      listen_addresses = "localhost";
-      initialDatabases = [
-        {
-          name = "app";
-          user = "app";
-          pass = "sillylittlepassword";
-        }
-        {
-          name = "app_dev";
-          user = "app";
-          pass = "sillylittlepassword";
-        }
-      ];
-    };
-
-    # connect via 127.0.0.1:6379
-    redis.enable = true;
-  };
-
   processes = {
     tailwind = {
       exec = "${lib.getExe pkgs.tailwindcss_4} -i ./tailwind.css -o ./assets/tailwind.css";
@@ -94,10 +71,6 @@
     dx-serve = {
       exec = "secretspec run -- ${lib.getExe pkgs.dioxus-cli} serve --package dioxus-app";
       cwd = config.git.root;
-      after = [
-        "devenv:processes:postgres"
-        "devenv:processes:redis"
-      ];
       ready.http.get.port = 8080;
     };
   };

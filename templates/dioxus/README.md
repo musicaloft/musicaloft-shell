@@ -1,58 +1,61 @@
-# Development
+# dioxus-app
 
-Your new jumpstart project includes basic organization with an organized `assets` folder and a `components` folder.
-If you chose to develop with the router feature, you will also have a `views` folder.
+A fullstack [Dioxus](https://dioxuslabs.com) web app, built and deployed with
+[devenv](https://devenv.sh) and musicaloft-shell.
+
+## Project layout
 
 ```
-project/
-├─ assets/ # Any assets that are used by the app should be placed here
+.
+├─ assets/          # static assets, referenced with the asset! macro
+├─ devenv/          # nix build, deployment, and overlay configuration
 ├─ src/
-│  ├─ main.rs # The entrypoint for the app. It also defines the routes for the app.
-│  ├─ components/
-│  │  ├─ mod.rs # Defines the components module
-│  │  ├─ hero.rs # The Hero component for use in the home page
-│  │  ├─ echo.rs # The echo component uses server functions to communicate with the server
-│  ├─ views/ # The views each route will render in the app.
-│  │  ├─ mod.rs # Defines the module for the views route and re-exports the components for each route
-│  │  ├─ blog.rs # The component that will render at the /blog/:id route
-│  │  ├─ home.rs # The component that will render at the / route
-├─ Cargo.toml # The Cargo.toml file defines the dependencies and feature flags for your project
+│  ├─ main.rs       # entrypoint and route definitions
+│  ├─ components/   # shared components (hero, server function echo)
+│  └─ views/        # one component per route, plus the navbar layout
+├─ Cargo.toml       # dependencies and the web/server features dx uses
+├─ Dioxus.toml      # dx configuration
+└─ tailwind.css     # tailwind input stylesheet
 ```
 
-### Automatic Tailwind (Dioxus 0.7+)
+## Developing
 
-As of Dioxus 0.7, there no longer is a need to manually install tailwind. Simply `dx serve` and you're good to go!
-
-Automatic tailwind is supported by checking for a file called `tailwind.css` in your app's manifest directory (next to Cargo.toml). To customize the file, use the dioxus.toml:
-
-```toml
-[application]
-tailwind_input = "my.css"
-tailwind_output = "assets/out.css"
-```
-
-### Tailwind Manual Install
-
-To use tailwind plugins or manually customize tailwind, you can can install the Tailwind CLI and use it directly.
-
-1. Install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
-2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation/tailwind-cli
-3. Run the following command in the root of the project to start the Tailwind CSS compiler:
+Enter the dev shell with `devenv shell`, then
+start the dev server with hot reloading:
 
 ```bash
-npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --watch
+devenv up
 ```
 
-### Serving Your App
+This runs `dx serve`, which builds both the wasm client and the server and
+serves the app on port 8080. The shell provides `dx`, `tailwindcss`,
+`wasm-opt`, and a `wasm-bindgen` matching the version in `Cargo.lock`.
 
-Run the following command in the root of your project to start developing with the default platform:
+### Tailwind
+
+dx regenerates `assets/tailwind.css` from `tailwind.css` whenever it builds,
+so there's no separate tailwind process to run. The generated stylesheet is
+tracked so the `asset!` macro can resolve it before dx has run.
+
+### Updating dependencies
+
+`wasm-bindgen-cli` must match the `wasm-bindgen` version in `Cargo.lock`
+exactly, and `dx` should match the `dioxus` version. After updating either
+crate, bump the matching packages in `devenv/overlay.nix`.
+
+## Building
 
 ```bash
-dx serve --platform web
+devenv build outputs.default
 ```
 
-To run for a different platform, use the `--platform platform` flag. E.g.
+The result contains the server binary at `bin/dioxus-app` and the prebuilt
+web assets at `bin/public`. The server listens on `IP` and `PORT` (defaulting
+to `0.0.0.0:8080`).
 
-```bash
-dx serve --platform desktop
-```
+## Deploying
+
+The `deploy-production` and `deploy-staging` scripts build a container image,
+load it into docker, and deploy it to [fly.io](https://fly.io) using the
+generated `fly.<environment>.toml` files. flyctl authenticates with
+`FLY_API_TOKEN`, which is declared in `secretspec.toml`.

@@ -68,7 +68,11 @@ let
         fi
       '';
 
-      dxTargetArgs = "@client --target ${cfg.clientTarget} @server --target ${serverTarget}";
+      # the platform flags matter: an explicit @server only overrides dx's
+      # bundle format, so without --server it autodetects the platform from
+      # default features (usually "web") and builds the server with the web
+      # renderer, which panics at startup
+      dxTargetArgs = "@client --web --target ${cfg.clientTarget} @server --server --target ${serverTarget}";
     in
     craneLib.mkCargoDerivation (
       {

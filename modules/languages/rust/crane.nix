@@ -145,6 +145,7 @@ in
     ./crane/checks.nix
     ./crane/lib.nix
     ./crane/source.nix
+    ./crane/splice.nix
   ];
 
   options.languages.rust.crane.import = lib.mkOption {

@@ -56,15 +56,9 @@ let
       src = args.src or (mkSource path (args.extraPaths or [ ]));
       cargoVendorDir = args.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });
 
-      # see crane/args.nix for why this doesn't use targetPkgs.callPackage:
-      # its makeOverridable wrapping injects a stray `override` function
-      # into plain attrset results.
-      crateExpression = args.crateExpression or (_: { });
-      splicedArgs = crateExpression (
-        builtins.intersectAttrs (builtins.functionArgs crateExpression) targetPkgs
-      );
-      buildInputs = (args.buildInputs or [ ]) ++ (splicedArgs.buildInputs or [ ]);
-      extraNativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ (splicedArgs.nativeBuildInputs or [ ]);
+      splicedArgs = craneCfg.spliceCrateExpression targetPkgs (args.crateExpression or (_: { }));
+      buildInputs = (args.buildInputs or [ ]) ++ splicedArgs.buildInputs;
+      extraNativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ splicedArgs.nativeBuildInputs;
 
       serverFeatureArgs = "--no-default-features --features ${lib.concatStringsSep "," cfg.serverFeatures}";
       clientFeatureArgs = "--no-default-features --features ${lib.concatStringsSep "," cfg.clientFeatures}";

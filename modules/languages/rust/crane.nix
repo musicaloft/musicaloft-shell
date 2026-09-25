@@ -79,10 +79,19 @@ let
       buildMember =
         dir:
         let
-          inherit (deps.craneLib.crateNameFromCargoToml { cargoToml = path + "/${dir}/Cargo.toml"; })
-            pname
-            version
-            ;
+          memberCargoToml = builtins.fromTOML (builtins.readFile (path + "/${dir}/Cargo.toml"));
+          pname = memberCargoToml.package.name;
+
+          # crane's crateNameFromCargoToml only reads the member's own
+          # Cargo.toml, so `version.workspace = true` would fall back to its
+          # placeholder. resolve inheritance the way cargo does, with
+          # cargo's own default when no version is set at all.
+          memberVersion = memberCargoToml.package.version or null;
+          version =
+            if builtins.isString memberVersion then
+              memberVersion
+            else
+              rootCargoToml.workspace.package.version or "0.0.0";
           memberArgs = cfg.mkArgs path (
             (builtins.removeAttrs args [ "cargoExtraArgs" ])
             // {

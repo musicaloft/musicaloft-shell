@@ -60,15 +60,20 @@ using dx's `@client`/`@server` target-override syntax (dx ≥0.7). See
 [crane-builds.md](./crane-builds.md#cross-compiling) for how
 `crossSystem` is handled.
 
-## Sandbox workarounds baked in
+## How `dx bundle` is invoked
 
-- `HOME`, `CARGO_NET_OFFLINE`, `DIOXUS_TELEMETRY_ENABLED=false`,
+- `HOME`, `CARGO_NET_OFFLINE`, `DIOXUS_TELEMETRY_ENABLED=false`, and
   `NO_DOWNLOADS=1` are all set so `dx bundle` never touches the network or
-  the real `$HOME`.
-- `dx`'s own `wasm-opt` invocation SIGABRTs under the Nix sandbox because
-  binaryen's thread pool spawning is blocked by the seccomp profile. A
-  passthrough stub intercepts it so `dx bundle` succeeds, then a real
-  `wasm-opt -Oz` pass runs afterwards with threading disabled.
+  the real `$HOME`, and uses the `wasm-opt`, `wasm-bindgen`, and
+  `tailwindcss` on `PATH`.
+- The client and server get explicit `--web` and `--server` platform
+  flags. Without them, an explicit `@server` section makes dx autodetect
+  the server's platform from default features, building it with the web
+  renderer (the server then panics at startup).
+- The client is built with `--debug-symbols=false`. dx defaults it to
+  `true` even for release builds, which makes it run `wasm-opt` with
+  `--debuginfo`; binaryen aborts on that, and dx then quietly ships the
+  unoptimized wasm module.
 - `dx bundle` runs Tailwind itself, but ignores its failures. For projects
   dx detects as using Tailwind (a `tailwind.css` or
   `tailwind.config.js`/`.ts` next to `Cargo.toml`), the build empties the
@@ -77,6 +82,9 @@ using dx's `@client`/`@server` target-override syntax (dx ≥0.7). See
   and output paths follow `tailwind_input`/`tailwind_output` in
   `Dioxus.toml`, and `languages.rust.dioxus.tailwind.package` picks the
   Tailwind version.
+- References to the Rust toolchain and vendored crate sources are
+  stripped from the output, as `craneLib.buildPackage` does, so they
+  don't end up in the runtime closure or container images.
 
 ## Known caveats
 

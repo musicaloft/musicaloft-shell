@@ -20,7 +20,7 @@ A fullstack [Dioxus](https://dioxuslabs.com) web app, built and deployed with
 
 ## Developing
 
-Enter the dev shell with `devenv shell`, then
+Enter the dev shell with `devenv shell` (or automatically with direnv), then
 start the dev server with hot reloading:
 
 ```bash

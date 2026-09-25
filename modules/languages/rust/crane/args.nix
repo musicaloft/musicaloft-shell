@@ -96,8 +96,7 @@ in
     description = ''
       Computes the shared crane build inputs (source, craneLib,
       cargoArtifacts, cargoVendorDir, and merged commonArgs) for a Cargo
-      project. Used internally by `import`, `importWorkspace`, and
-      `languages.rust.dioxus.import`.
+      project. Used internally by `import` and `importWorkspace`.
     '';
   };
 

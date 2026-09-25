@@ -43,13 +43,15 @@ let
   mkLib =
     {
       crossSystem ? null,
+      # lets callers that already hold the target pkgs (e.g. from `mkPkgs`)
+      # skip re-instantiating nixpkgs, which isn't memoized across calls
+      pkgs ? mkPkgs { inherit crossSystem; },
     }:
     let
-      targetPkgs = mkPkgs { inherit crossSystem; };
-      craneLib = (crane.mkLib targetPkgs).overrideToolchain (_: cfg.toolchainPackage);
+      craneLib = (crane.mkLib pkgs).overrideToolchain (_: cfg.toolchainPackage);
 
-      hostPlatform = targetPkgs.stdenv.hostPlatform;
-      isCross = targetPkgs.stdenv.buildPlatform != hostPlatform;
+      hostPlatform = pkgs.stdenv.hostPlatform;
+      isCross = pkgs.stdenv.buildPlatform != hostPlatform;
       rustcTarget = hostPlatform.rust.rustcTarget;
     in
     lib.warnIf (isCross && !(builtins.elem rustcTarget cfg.targets))
@@ -87,6 +89,9 @@ in
           that target, carrying over this shell's overlays and nixpkgs
           config, and the returned `craneLib` is bound to that
           cross-instantiated `pkgs`.
+        - `pkgs` (optional): an already-instantiated `pkgs` set to bind the
+          `craneLib` to, such as one returned by `mkPkgs`. Takes precedence
+          over `crossSystem`, and avoids instantiating nixpkgs a second time.
 
         Example usage:
         ```nix

@@ -41,19 +41,17 @@
     };
   };
 
-  # tools available in the dev shell
+  # extra tools for the dev shell. dx, wasm-bindgen, tailwindcss, and
+  # wasm-opt come from languages.rust.dioxus, and the usual cargo tools
+  # from musicaloft-shell's rust module.
   packages = with pkgs; [
-    cargo-machete
-    cargo-outdated
     cargo-watch
-    dioxus-cli
     flyctl
-    wasm-bindgen-cli_0_2_128
   ];
 
   processes = {
     dx-serve = {
-      exec = "secretspec run -- ${lib.getExe pkgs.dioxus-cli} serve --package dioxus-app";
+      exec = "secretspec run -- ${lib.getExe config.languages.rust.dioxus.cliPackage} serve";
       cwd = config.git.root;
       ready.http.get.port = 8080;
     };
@@ -63,7 +61,7 @@
   # other formatters (nixfmt, oxfmt, kdlfmt, typos) come from there.
   treefmt.config.settings.formatter.dx-fmt =
     let
-      dx = lib.getExe pkgs.dioxus-cli;
+      dx = lib.getExe config.languages.rust.dioxus.cliPackage;
     in
     {
       command = lib.getExe pkgs.bash;

@@ -205,10 +205,12 @@ in
       `workspace.members`/`workspace.exclude` (trailing `/*` globs are
       expanded), or can be given explicitly as a list of relative
       directories via `args.members`. Every other argument is the same as
-      for `languages.rust.crane.import`. Dependencies are built exactly
-      once, for the whole workspace with `--all-targets`, and that same
+      for `languages.rust.crane.import`. Dependencies are built once, for
+      the whole workspace with `--all-targets`, and that same
       `cargoArtifacts`/`cargoVendorDir` pair is reused for every member
-      package and every check.
+      package and every check. Members that enable different features of
+      a shared dependency recompile it in their own build, since each
+      member is built with `-p` and sees only its own features.
 
       Returns an attribute set:
 

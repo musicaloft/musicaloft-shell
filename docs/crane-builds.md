@@ -109,7 +109,7 @@ Members are resolved from the root `Cargo.toml`'s
 expanded), or given explicitly via `args.members` (a list of relative
 directories) if your workspace layout needs something more exotic.
 
-Dependencies are built exactly **once**, for the whole workspace with
+Dependencies are built **once**, for the whole workspace with
 `--all-targets`, and that single `cargoArtifacts`/`cargoVendorDir` pair is
 reused by every member package and every check. `importWorkspace` returns:
 
@@ -117,6 +117,14 @@ reused by every member package and every check. `importWorkspace` returns:
 - `checks`: `clippy`, `doc`, `fmt`, `nextest`, `taplo`, run once across the
   whole workspace
 - `deps`: the shared `cargoArtifacts` derivation
+
+Member packages are built with `-p <member>`, while the shared dependency
+build uses `--workspace`. Cargo unifies features across whatever it's
+building, so if members enable _different_ features of a shared
+dependency, a member build only sees its own features and recompiles
+that dependency (and anything depending on it) instead of reusing the
+cached copy. Members that agree on features reuse everything. The
+workspace-wide checks always match the dependency build exactly.
 
 The root `Cargo.toml` must define only `[workspace]`. Cargo silently
 scopes itself to a single package if the root also defines `[package]`,

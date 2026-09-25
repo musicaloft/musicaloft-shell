@@ -91,7 +91,10 @@ let
           cfg.cliPackage
           cfg.wasmBindgenPackage
           pkgs.binaryen
-          pkgs.makeWrapper
+          # a compiled wrapper built for the server's platform, unlike
+          # makeWrapper's bash script, whose shebang points at the build
+          # platform's bash (and which would need bash in container images)
+          targetPkgs.makeBinaryWrapper
         ]
         ++ tailwind.nativeBuildInputs
         ++ extraNativeBuildInputs;

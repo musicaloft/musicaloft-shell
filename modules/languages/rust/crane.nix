@@ -70,7 +70,13 @@ let
       # it to its `cargo check` (doCheck defaults to true there), cargo
       # rejects the flag twice, and `cargo doc` rejects it outright.
       deps = cfg.mkArgs path (
-        args
+        {
+          # a [workspace]-only root has no package name, so without these
+          # crane would warn and fall back to its "cargo-package" placeholder
+          pname = rootCargoToml.workspace.metadata.crane.name or "workspace";
+          version = rootCargoToml.workspace.package.version or "0.0.0";
+        }
+        // args
         // {
           cargoExtraArgs = "--workspace " + (args.cargoExtraArgs or "");
         }

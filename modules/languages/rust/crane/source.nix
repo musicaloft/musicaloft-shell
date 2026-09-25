@@ -19,16 +19,29 @@ let
       # accept both root-relative strings and path literals; interpolating
       # a path literal into a string would copy it to the store instead
       toPath = p: if builtins.isPath p then p else root + "/${p}";
+
+      # devenv evaluates the working tree directly rather than a git
+      # checkout, so local build outputs (build-script `.rs` files under
+      # target/, generated toml under .devenv/) would otherwise match the
+      # filters above and churn the source hash on every local build
+      localOutputs = lib.fileset.unions (
+        map (p: lib.fileset.maybeMissing (root + "/${p}")) [
+          "target"
+          ".devenv"
+          ".direnv"
+          "result"
+        ]
+      );
     in
     lib.fileset.toSource {
       inherit root;
-      fileset = lib.fileset.unions (
+      fileset = lib.fileset.difference (lib.fileset.unions (
         [ (cfg.lib.fileset.commonCargoSources root) ]
         ++ lib.optional (extraFileTypes != [ ]) (
           lib.fileset.fileFilter (file: builtins.any file.hasExt extraFileTypes) root
         )
         ++ map (p: lib.fileset.maybeMissing (toPath p)) extraPaths
-      );
+      )) localOutputs;
     };
 in
 {

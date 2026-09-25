@@ -14,6 +14,8 @@ let
     "locked"
     "cargoExtraArgs"
     "src"
+    "extraPaths"
+    "extraFileTypes"
   ];
 
   # builds the shared arguments for a crane build: the source, the
@@ -35,7 +37,11 @@ let
       pkgs = args.pkgs or (cfg.mkPkgs { crossSystem = args.crossSystem or null; });
       craneLib = args.craneLib or (cfg.mkLib { inherit pkgs; });
 
-      src = args.src or (cfg.mkSource path);
+      src =
+        args.src or (cfg.mkSource path {
+          extraPaths = args.extraPaths or [ ];
+          extraFileTypes = args.extraFileTypes or [ ];
+        });
 
       splicedArgs = cfg.spliceCrateExpression pkgs (args.crateExpression or (_: { }));
 

@@ -65,10 +65,32 @@ outputs = {
   `--locked` default disappears as soon as `cargoExtraArgs` is set, and
   cargo rejects the flag if it's given twice, so toggle this rather than
   editing `--locked` in `cargoExtraArgs` by hand.
+- `extraPaths`, `extraFileTypes` — extra files to keep in the source
+  filter (see below).
 - `crossSystem` — a Nixpkgs `crossSystem` value to cross-compile for.
 - `crateExpression` — a `pkgs.callPackage`-style function returning extra
   `buildInputs`/`nativeBuildInputs`, spliced onto the correct
   build/host/target `pkgs` when cross-compiling (see below).
+
+### Source filtering
+
+By default, only Rust sources, toml files, and `Cargo.lock` make it into
+the build, the same set `craneLib.cleanCargoSource` keeps. That way,
+editing `devenv.nix` or `README.md` never invalidates cached dependency
+builds. Crates that read other files at compile time (`include_str!`,
+`sqlx` migrations, and so on) opt them in per build:
+
+```nix
+config.languages.rust.crane.import ./. {
+  # files or directories, relative to the project root
+  extraPaths = [ "migrations" ];
+  # file extensions kept anywhere in the project
+  extraFileTypes = [ "html" ];
+}
+```
+
+`extraPaths` also accepts path literals like `./migrations`. Missing
+paths are ignored.
 
 ## Building a workspace
 

@@ -179,6 +179,9 @@ in
       - `locked` (default `true`): pass `--locked` to cargo. Set this to
         `false` rather than adding or removing `--locked` in
         `cargoExtraArgs` yourself.
+      - `extraPaths`, `extraFileTypes`: extra files to keep in the source
+        filter, for crates that read non-Rust files at compile time. See
+        `languages.rust.crane.mkSource`.
 
       Example usage:
       ```nix
@@ -201,7 +204,8 @@ in
       Workspace members are resolved from the root Cargo.toml's
       `workspace.members`/`workspace.exclude` (trailing `/*` globs are
       expanded), or can be given explicitly as a list of relative
-      directories via `args.members`. Dependencies are built exactly
+      directories via `args.members`. Every other argument is the same as
+      for `languages.rust.crane.import`. Dependencies are built exactly
       once, for the whole workspace with `--all-targets`, and that same
       `cargoArtifacts`/`cargoVendorDir` pair is reused for every member
       package and every check.

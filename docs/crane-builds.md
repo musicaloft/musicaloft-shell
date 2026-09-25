@@ -92,6 +92,12 @@ config.languages.rust.crane.import ./. {
 `extraPaths` also accepts path literals like `./migrations`. Missing
 paths are ignored.
 
+Local build outputs (`target/`, `.devenv/`, `.direnv/`, `result/`) and
+symlinks are always left out. devenv evaluates the working tree rather
+than a git checkout, so build-script output and devenv's generated
+configs (symlinks into the Nix store, like `.cargo/config.toml`) would
+otherwise leak into the source and rebuild dependencies for no reason.
+
 ## Building a workspace
 
 ```nix

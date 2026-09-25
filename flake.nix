@@ -9,6 +9,10 @@
           path = ./templates/basic;
           description = "A simple devenv and flake with musicaloft-shell";
         };
+        dioxus = {
+          path = ./templates/dioxus;
+          description = "A fullstack Dioxus web app with devenv, crane, Tailwind, and fly.io deployment";
+        };
         python = {
           path = ./templates/python;
           description = "A Python template with devenv, uv, ruff, ty, and git hooks";

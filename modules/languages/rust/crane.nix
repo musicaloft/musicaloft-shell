@@ -36,8 +36,11 @@ let
   import' =
     path: args:
     let
-      result = cfg.mkArgs path (args // { doCheck = args.doCheck or false; });
-      pkg = result.craneLib.buildPackage result.commonArgs;
+      # doCheck only defaults to false for the package itself: the deps
+      # build keeps crane's default so it also caches dev-dependencies for
+      # the clippy/nextest checks, which run separately.
+      result = cfg.mkArgs path args;
+      pkg = result.craneLib.buildPackage (result.commonArgs // { doCheck = args.doCheck or false; });
     in
     pkg.overrideAttrs (old: {
       passthru = (old.passthru or { }) // {
@@ -157,6 +160,10 @@ in
       returned package carries `passthru.checks` (`clippy`, `doc`, `fmt`,
       `nextest`, `taplo`), `passthru.craneLib`, `passthru.commonArgs`, and
       `passthru.cargoArtifacts`, all reusing the same dependency build.
+
+      The package is built with `doCheck = false` unless `args` says
+      otherwise, since tests already run in `passthru.checks.nextest`. The
+      dependency build still caches dev-dependencies for those checks.
 
       The `args` attribute set accepts everything `craneLib.buildPackage`
       does, plus:

@@ -39,6 +39,11 @@ the failure modes this avoids.
 - `passthru.craneLib`, `passthru.commonArgs`, `passthru.cargoArtifacts` —
   escape hatches for composing further crane derivations by hand.
 
+The package itself defaults to `doCheck = false`, since its tests already
+run in `passthru.checks.nextest`; pass `doCheck = true` to also run
+`cargo test` inside the package build. Either way, the dependency build
+caches dev-dependencies, so the checks don't rebuild them.
+
 Checks are returned, not auto-wired into `git-hooks` or `enterTest` — wire
 them up yourself if you want them:
 

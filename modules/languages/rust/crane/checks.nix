@@ -31,7 +31,14 @@ let
 
       fmt = craneLib.cargoFmt { inherit (commonArgs) src; };
 
-      nextest = craneLib.cargoNextest baseArgs;
+      # nextest fails outright when there's nothing to run, which would
+      # break the check for freshly generated crates with no tests yet
+      nextest = craneLib.cargoNextest (
+        baseArgs
+        // {
+          cargoNextestExtraArgs = "--no-tests=warn";
+        }
+      );
 
       taplo = craneLib.taploFmt { inherit (commonArgs) src; };
     };

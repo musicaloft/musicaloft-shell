@@ -126,6 +126,8 @@ devenv shell
 
 ## License
 
-MIT License - Copyright (c) 2026 Musicaloft LLC
+Copyright (c) 2026 Musicaloft LLC
 
-See [LICENSE](./LICENSE) for details.
+Dual-licensed under the MIT license and the Apache 2.0 license.
+
+See [LICENSE-MIT](./LICENSE-MIT) and [LICENSE-APACHE](./LICENSE-APACHE) for details.

@@ -25,7 +25,7 @@ let
   resolveMembers =
     root:
     let
-      cargoToml = builtins.fromTOML (builtins.readFile (root + "/Cargo.toml"));
+      cargoToml = fromTOML (builtins.readFile (root + "/Cargo.toml"));
       expand = lib.concatMap (expandMemberGlob root);
       members = lib.unique (expand (cargoToml.workspace.members or [ ]));
       excluded = expand (cargoToml.workspace.exclude or [ ]);
@@ -57,7 +57,7 @@ let
   importWorkspace =
     path: args:
     let
-      rootCargoToml = builtins.fromTOML (builtins.readFile (path + "/Cargo.toml"));
+      rootCargoToml = fromTOML (builtins.readFile (path + "/Cargo.toml"));
     in
     assert lib.assertMsg (!(rootCargoToml ? package && rootCargoToml ? workspace)) ''
       languages.rust.crane.importWorkspace: ${toString path}/Cargo.toml defines both
@@ -71,7 +71,7 @@ let
 
       # everything but `members` is forwarded to crane, and from there into
       # the derivation's environment
-      buildArgs = builtins.removeAttrs args [ "members" ];
+      buildArgs = removeAttrs args [ "members" ];
 
       # `--all-targets` is deliberately left out: buildDepsOnly already adds
       # it to its `cargo check` (doCheck defaults to true there), cargo
@@ -92,7 +92,7 @@ let
       buildMember =
         dir:
         let
-          memberCargoToml = builtins.fromTOML (builtins.readFile (path + "/${dir}/Cargo.toml"));
+          memberCargoToml = fromTOML (builtins.readFile (path + "/${dir}/Cargo.toml"));
           pname = memberCargoToml.package.name;
 
           # crane's crateNameFromCargoToml only reads the member's own
@@ -106,7 +106,7 @@ let
             else
               rootCargoToml.workspace.package.version or "0.0.0";
           memberArgs = cfg.mkArgs path (
-            (builtins.removeAttrs buildArgs [ "cargoExtraArgs" ])
+            (removeAttrs buildArgs [ "cargoExtraArgs" ])
             // {
               inherit pname version;
               inherit (deps) pkgs craneLib;
@@ -141,11 +141,11 @@ let
 in
 {
   imports = [
-    ./crane/args.nix
-    ./crane/checks.nix
-    ./crane/lib.nix
-    ./crane/source.nix
-    ./crane/splice.nix
+    ./args.nix
+    ./checks.nix
+    ./lib.nix
+    ./source.nix
+    ./splice.nix
   ];
 
   options.languages.rust.crane.import = lib.mkOption {

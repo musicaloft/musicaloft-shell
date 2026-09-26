@@ -121,7 +121,7 @@ let
     );
 in
 {
-  imports = [ ./dioxus/tailwind.nix ];
+  imports = [ ./tailwind.nix ];
 
   options.languages.rust.dioxus = {
     enable = lib.mkEnableOption "building fullstack Dioxus apps with crane and `dx bundle`";

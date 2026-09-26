@@ -10,8 +10,8 @@ let
 in
 {
   imports = [
-    ./crane.nix
-    ./dioxus.nix
+    ./crane
+    ./dioxus
   ];
 
   config = lib.mkIf cfg.enable {

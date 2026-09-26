@@ -58,7 +58,7 @@ let
         ++ lib.optional (args ? cargoExtraArgs) args.cargoExtraArgs
       );
 
-      extra = builtins.removeAttrs args consumedKeys;
+      extra = removeAttrs args consumedKeys;
 
       commonArgs = {
         inherit src;

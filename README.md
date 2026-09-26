@@ -117,8 +117,8 @@ And that's it!
 git clone git@git.musicaloft.com:musicaloft/musicaloft-shell.git
 cd musicaloft-shell
 
-# allow direnv for automatic environment loading
-direnv allow
+# allow devenv for automatic environment loading
+devenv allow
 
 # or manually enter the development shell
 devenv shell

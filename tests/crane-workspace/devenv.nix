@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   testLib,
   ...
 }:
@@ -9,6 +10,12 @@ let
 
   workspace = crane.importWorkspace ./. { };
   inherit (workspace) packages;
+
+  # cross-compiled at the cargo level, like crane-cross's wasm builds
+  wasi = crane.importWorkspace ./. { CARGO_BUILD_TARGET = "wasm32-wasip1"; };
+
+  # the sandbox has no writable home for wasmtime's compilation cache
+  wasmtimeRun = "${pkgs.wasmtime}/bin/wasmtime run -C cache=n";
 in
 {
   imports = [ ../common ];
@@ -16,10 +23,12 @@ in
   languages.rust = {
     enable = true;
     channel = "nightly";
+    targets = [ "wasm32-wasip1" ];
   };
 
   outputs = packages // {
     inherit (workspace) checks deps;
+    wasi = wasi.packages;
 
     tests = {
       # crates/experimental matches the `crates/*` glob, but is excluded
@@ -64,6 +73,17 @@ in
         expected = "5 words";
       };
 
+      wasi-cli = testLib.expectOutput {
+        name = "workspace-cli-wasi";
+        command = "${wasmtimeRun} ${wasi.packages.workspace-cli}/bin/workspace-cli.wasm";
+        expected = "[Workspace Cli] ready";
+      };
+
+      wasi-stats = testLib.expectOutput {
+        name = "workspace-stats-wasi";
+        command = "${wasmtimeRun} ${wasi.packages.workspace-stats}/bin/workspace-stats.wasm";
+        expected = "5 words";
+      };
     };
   };
 }

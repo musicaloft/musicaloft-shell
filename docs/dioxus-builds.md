@@ -96,33 +96,39 @@ using dx's `@client`/`@server` target-override syntax (dx ≥0.7). See
 
 For fullstack projects split into several crates (like the `web`, `ui`,
 and `api` crates `dx new` creates for workspaces), point `import` at the
-app crate and pass the whole workspace as `src`, so the sibling crates
-and the workspace's `Cargo.lock` are part of the build:
+app crate:
 
 ```nix
 { config, ... }:
 let
   inherit (config.languages.rust) crane dioxus;
-
-  # the default source's assets and tailwind files are relative to the app
-  # crate, so list every crate's assets yourself. the `asset!` macro reads
-  # them at compile time, so the checks need them too.
-  extraPaths = [
-    "packages/ui/assets"
-    "packages/web/assets"
-  ];
 in
 {
   outputs.default = dioxus.import ./packages/web {
-    src = crane.mkSource ./. {
-      extraPaths = extraPaths ++ [ "packages/web/tailwind.css" ];
-    };
+    extraPaths = [ "packages/ui/assets" ];
   };
 
   # dx doesn't run clippy, tests, or docs
-  outputs.checks = (crane.importWorkspace ./. { inherit extraPaths; }).checks;
+  outputs.checks =
+    (crane.importWorkspace ./. {
+      extraPaths = [
+        "packages/ui/assets"
+        "packages/web/assets"
+      ];
+    }).checks;
 }
 ```
+
+The source is rooted at the workspace, where its `Cargo.lock` lives, so
+the sibling crates are part of the build too. The workspace root is found
+the way cargo keeps `Cargo.lock`: it's the nearest directory with one,
+starting at the app crate itself. A standalone app is its own workspace
+root.
+
+The app's own `assets/` and Tailwind files are always kept, but other
+crates' assets aren't, so list them in `extraPaths`, relative to the
+workspace root. The `asset!` macro reads assets at compile time, so the
+crane checks need them too.
 
 `dx bundle` runs from the workspace root, but reads `Dioxus.toml` and
 resolves Tailwind's paths from the app crate's own directory, as `dx
@@ -132,8 +138,8 @@ resolved from the workspace root.
 ## Known caveats
 
 - **A custom `src` replaces the default source entirely**, including the
-  app's `assets/` and Tailwind files, so a workspace app's `src` has to
-  list them (and any other crate's assets) in `extraPaths`, as shown
-  above.
+  app's `assets/` and Tailwind files, so list them in `extraPaths` when
+  building your own source with `crane.mkSource`. It must be rooted at
+  the workspace root.
 - The crane caveats in [crane-builds.md](./crane-builds.md#known-caveats)
   apply here too.

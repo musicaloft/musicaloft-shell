@@ -4,6 +4,7 @@
 */
 { pkgs }:
 {
+  expectEqual = pkgs.callPackage ./expect-equal.nix { };
   expectOutput = pkgs.callPackage ./expect-output.nix { };
   expectSource = pkgs.callPackage ./expect-source.nix { };
 }

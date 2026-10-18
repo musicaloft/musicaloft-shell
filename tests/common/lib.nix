@@ -5,4 +5,5 @@
 { pkgs }:
 {
   expectOutput = pkgs.callPackage ./expect-output.nix { };
+  expectSource = pkgs.callPackage ./expect-source.nix { };
 }

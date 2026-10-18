@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.languages.rust.dioxus.tailwind;
+  craneCfg = config.languages.rust.crane;
 
   # files whose presence makes dx run tailwind before building, checked in
   # the same order dx 0.7's `TailwindCli::autodetect` uses (config files
@@ -34,6 +35,13 @@ let
 
       enabled = builtins.any (file: builtins.pathExists (path + "/${file}")) detectionFiles;
 
+      # dx bundles from the workspace root (which is the app itself, unless
+      # it's a workspace member), but resolves tailwind's paths from the
+      # app's own directory
+      appDir = lib.path.removePrefix (craneCfg.workspaceRoot path) path;
+      displayOutput = if appDir == "./." then output else "${lib.removePrefix "./" appDir}/${output}";
+
+      appDir' = lib.escapeShellArg appDir;
       input' = lib.escapeShellArg input;
       output' = lib.escapeShellArg output;
     in
@@ -46,18 +54,22 @@ let
       # can't pass the check below. it must still exist, since the `asset!`
       # macro validates it at compile time.
       preBundle = lib.optionalString enabled ''
+        pushd ${appDir'} > /dev/null
         mkdir -p "$(dirname ${output'})"
         : > ${output'}
+        popd > /dev/null
       '';
 
       # rerun tailwind on failure purely to surface the error dx swallowed
       postBundle = lib.optionalString enabled ''
+        pushd ${appDir'} > /dev/null
         if [ ! -s ${output'} ]; then
-          echo "error: dx bundle didn't generate the tailwind stylesheet at ${output}." >&2
+          echo "error: dx bundle didn't generate the tailwind stylesheet at ${displayOutput}." >&2
           echo "rerunning tailwindcss directly to show what went wrong:" >&2
           tailwindcss --input ${input'} --output ${output'} >&2 || true
           exit 1
         fi
+        popd > /dev/null
       '';
     };
 in

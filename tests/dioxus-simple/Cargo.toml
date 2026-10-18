@@ -1,0 +1,15 @@
+[package]
+name = "dioxus-simple"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+dioxus = { version = "0.7.10", features = ["fullstack"] }
+
+# dx enables exactly one of these per build: `web` for the wasm client and
+# `server` for the fullstack server binary
+[features]
+default = ["web"]
+web = ["dioxus/web"]
+server = ["dioxus/server"]

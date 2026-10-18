@@ -46,7 +46,9 @@ let
       output' = lib.escapeShellArg output;
     in
     {
-      extraPaths = detectionFiles ++ [ input ];
+      # path literals, since they're relative to the app rather than to
+      # the root of the source they're kept in
+      extraPaths = map (file: path + "/${file}") (detectionFiles ++ [ input ]);
 
       nativeBuildInputs = lib.optional enabled cfg.package;
 

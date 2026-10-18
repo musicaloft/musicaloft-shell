@@ -35,7 +35,7 @@ let
       # read by the `asset!` macro at compile time
       src =
         args.src or (craneCfg.mkSource path {
-          extraPaths = [ "assets" ] ++ tailwind.extraPaths ++ (args.extraPaths or [ ]);
+          extraPaths = [ (path + "/assets") ] ++ tailwind.extraPaths ++ (args.extraPaths or [ ]);
           extraFileTypes = args.extraFileTypes or [ ];
         });
       cargoVendorDir = args.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });

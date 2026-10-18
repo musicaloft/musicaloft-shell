@@ -1,0 +1,8 @@
+[package]
+name = "workspace-stats"
+# no version at all, so cargo defaults to 0.0.0 rather than inheriting one
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+workspace-core.workspace = true

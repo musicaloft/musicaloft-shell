@@ -1,0 +1,9 @@
+[package]
+name = "workspace-cli"
+# deliberately not inherited from the workspace
+version = "1.2.3"
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+workspace-core.workspace = true

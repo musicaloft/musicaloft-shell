@@ -1,0 +1,18 @@
+[workspace]
+resolver = "3"
+# a glob plus an explicit path, so both kinds of member entries are resolved
+members = ["crates/*", "tools/stats"]
+# matched by the glob above, but must never be built
+exclude = ["crates/experimental"]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+heck = "0.5"
+workspace-core = { path = "crates/core" }
+
+[workspace.metadata.crane]
+name = "crane-workspace"

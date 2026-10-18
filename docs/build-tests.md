@@ -41,7 +41,7 @@ gigabytes of free space in the Nix store.
 | `crane-workspace`  | `crane.importWorkspace`                     | A workspace on nightly Rust with glob and explicit members, an excluded member that fails to compile if it's ever built, version inheritance, a lib-only member, a single shared dependency build, and a WASI build of the whole workspace. |
 | `crane-cross`      | `crane.import`                              | Cross-compiling to aarch64 (run under qemu) and static musl through `crossSystem`, a C dependency spliced in with `crateExpression`, and bare `wasm32-unknown-unknown` and `wasm32-wasip1` builds (run with wasmtime).                      |
 | `dioxus-simple`    | `dioxus.import`                             | A single-crate fullstack app with Tailwind, server-side rendering with server function data, and crane checks alongside the bundle.                                                                                                         |
-| `dioxus-workspace` | `dioxus.import` and `crane.importWorkspace` | A fullstack app split into `web`, `ui`, and `api` crates, as `dx new` lays out workspaces, with assets in a library crate and Tailwind sources from a sibling crate.                                                                        |
+| `dioxus-workspace` | `dioxus.import` and `crane.importWorkspace` | A fullstack app split into `web`, `ui`, and `api` crates, as `dx new` lays out workspaces, built from the default workspace source, with assets in a library crate and Tailwind sources from a sibling crate.                               |
 
 The Dioxus apps are tested by starting their servers inside the build
 sandbox and fetching pages, a server function, and the wasm client from

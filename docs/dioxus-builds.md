@@ -92,12 +92,46 @@ using dx's `@client`/`@server` target-override syntax (dx ≥0.7). See
   stripped from the output, as `craneLib.buildPackage` does, so they
   don't end up in the runtime closure or container images.
 
+## Building an app in a workspace
+
+For fullstack projects split into several crates (like the `web`, `ui`,
+and `api` crates `dx new` creates for workspaces), point `import` at the
+app crate and pass the whole workspace as `src`, so the sibling crates
+and the workspace's `Cargo.lock` are part of the build:
+
+```nix
+{ config, ... }:
+let
+  inherit (config.languages.rust) crane dioxus;
+in
+{
+  outputs.default = dioxus.import ./packages/web {
+    src = crane.mkSource ./. {
+      # the default source's assets and tailwind files are relative to the
+      # app crate, so list every crate's assets yourself
+      extraPaths = [
+        "packages/ui/assets"
+        "packages/web/assets"
+        "packages/web/tailwind.css"
+      ];
+    };
+  };
+
+  # dx doesn't run clippy, tests, or docs
+  outputs.checks = (crane.importWorkspace ./. { }).checks;
+}
+```
+
+`dx bundle` runs from the workspace root, but reads `Dioxus.toml` and
+resolves Tailwind's paths from the app crate's own directory, as `dx
+serve` does. Versions inherited with `version.workspace = true` are
+resolved from the workspace root.
+
 ## Known caveats
 
-- **`dioxus.import` targets a single crate**, matching the
-  `dioxus new --fullstack` template's layout. Workspace-split fullstack
-  projects (separate client/server/shared crates) aren't handled by this
-  builder; compose `crane.importWorkspace` with your own `dx` invocation
-  instead.
+- **A custom `src` replaces the default source entirely**, including the
+  app's `assets/` and Tailwind files, so a workspace app's `src` has to
+  list them (and any other crate's assets) in `extraPaths`, as shown
+  above.
 - The crane caveats in [crane-builds.md](./crane-builds.md#known-caveats)
   apply here too.

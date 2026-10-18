@@ -97,14 +97,15 @@ let
 
           # crane's crateNameFromCargoToml only reads the member's own
           # Cargo.toml, so `version.workspace = true` would fall back to its
-          # placeholder. resolve inheritance the way cargo does, with
-          # cargo's own default when no version is set at all.
-          memberVersion = memberCargoToml.package.version or null;
+          # placeholder. resolve inheritance the way cargo does: only an
+          # explicit `version.workspace = true` inherits, and a member with
+          # no version at all gets cargo's own default.
+          memberVersion = memberCargoToml.package.version or "0.0.0";
           version =
-            if builtins.isString memberVersion then
-              memberVersion
+            if builtins.isAttrs memberVersion then
+              rootCargoToml.workspace.package.version or "0.0.0"
             else
-              rootCargoToml.workspace.package.version or "0.0.0";
+              memberVersion;
           memberArgs = cfg.mkArgs path (
             (removeAttrs buildArgs [ "cargoExtraArgs" ])
             // {

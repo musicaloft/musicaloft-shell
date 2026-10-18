@@ -1,0 +1,12 @@
+[package]
+name = "crane-simple"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+heck = "0.5"
+
+[features]
+# uppercases the whole greeting, to test feature flags in crane builds
+shout = []

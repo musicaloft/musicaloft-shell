@@ -103,22 +103,24 @@ and the workspace's `Cargo.lock` are part of the build:
 { config, ... }:
 let
   inherit (config.languages.rust) crane dioxus;
+
+  # the default source's assets and tailwind files are relative to the app
+  # crate, so list every crate's assets yourself. the `asset!` macro reads
+  # them at compile time, so the checks need them too.
+  extraPaths = [
+    "packages/ui/assets"
+    "packages/web/assets"
+  ];
 in
 {
   outputs.default = dioxus.import ./packages/web {
     src = crane.mkSource ./. {
-      # the default source's assets and tailwind files are relative to the
-      # app crate, so list every crate's assets yourself
-      extraPaths = [
-        "packages/ui/assets"
-        "packages/web/assets"
-        "packages/web/tailwind.css"
-      ];
+      extraPaths = extraPaths ++ [ "packages/web/tailwind.css" ];
     };
   };
 
   # dx doesn't run clippy, tests, or docs
-  outputs.checks = (crane.importWorkspace ./. { }).checks;
+  outputs.checks = (crane.importWorkspace ./. { inherit extraPaths; }).checks;
 }
 ```
 

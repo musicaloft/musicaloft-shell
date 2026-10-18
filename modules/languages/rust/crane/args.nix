@@ -17,6 +17,18 @@ let
     "extraPaths"
     "extraFileTypes"
   ];
+in
+{
+  options.languages.rust.crane.mkArgs = lib.mkOption {
+    type = lib.types.functionTo (lib.types.functionTo lib.types.raw);
+    readOnly = true;
+    internal = true;
+    description = ''
+      Computes the shared crane build inputs (source, craneLib,
+      cargoArtifacts, cargoVendorDir, and merged commonArgs) for a Cargo
+      project. Used internally by `import` and `importWorkspace`.
+    '';
+  };
 
   # builds the shared arguments for a crane build: the source, the
   # (possibly cross) craneLib, resolved cargo flags, and a single
@@ -29,7 +41,7 @@ let
   # explicitly, so that identical inputs always produce identical (and
   # therefore cache-hitting) dependency builds. see:
   # https://crane.dev/faq/constant-rebuilds.html
-  mkArgs =
+  config.languages.rust.crane.mkArgs =
     path: args:
     let
       # instantiated once and shared with mkLib, since cross builds
@@ -87,18 +99,4 @@ let
         inherit cargoArtifacts cargoVendorDir;
       };
     };
-in
-{
-  options.languages.rust.crane.mkArgs = lib.mkOption {
-    type = lib.types.functionTo (lib.types.functionTo lib.types.raw);
-    readOnly = true;
-    internal = true;
-    description = ''
-      Computes the shared crane build inputs (source, craneLib,
-      cargoArtifacts, cargoVendorDir, and merged commonArgs) for a Cargo
-      project. Used internally by `import` and `importWorkspace`.
-    '';
-  };
-
-  config.languages.rust.crane.mkArgs = mkArgs;
 }

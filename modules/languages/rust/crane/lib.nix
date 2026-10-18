@@ -13,50 +13,6 @@ let
     attribute = "languages.rust.crane.lib";
     follows = [ "nixpkgs" ];
   };
-
-  # builds (or reuses) the pkgs set that a crane build should run against.
-  #
-  # for the native host this is just the shell's own `pkgs`. for a foreign
-  # target, nixpkgs is re-instantiated, carrying over devenv's overlays and
-  # nixpkgs config so cross builds see the same package set (including
-  # rust-overlay, if configured) as the dev shell.
-  mkPkgs =
-    {
-      crossSystem ? null,
-    }:
-    if crossSystem == null then
-      pkgs
-    else
-      import pkgs.path {
-        localSystem = pkgs.stdenv.buildPlatform.system;
-        inherit crossSystem;
-        overlays = config.overlays;
-        inherit (pkgs) config;
-      };
-
-  # builds a craneLib instance pinned to the devenv-managed rust toolchain.
-  #
-  # passing a constant function (rather than the toolchain package directly)
-  # to `overrideToolchain` satisfies crane's splicing requirements for cross
-  # builds without any additional cost, since the toolchain itself is a
-  # build-platform tool that is valid across every splice.
-  mkLib =
-    {
-      crossSystem ? null,
-      # lets callers that already hold the target pkgs (e.g. from `mkPkgs`)
-      # skip re-instantiating nixpkgs, which isn't memoized across calls
-      pkgs ? mkPkgs { inherit crossSystem; },
-    }:
-    let
-      craneLib = (crane.mkLib pkgs).overrideToolchain (_: cfg.toolchainPackage);
-
-      hostPlatform = pkgs.stdenv.hostPlatform;
-      isCross = pkgs.stdenv.buildPlatform != hostPlatform;
-      rustcTarget = hostPlatform.rust.rustcTarget;
-    in
-    lib.warnIf (isCross && !(builtins.elem rustcTarget cfg.targets))
-      "languages.rust.crane.mkLib is cross-compiling to '${rustcTarget}', but that target isn't in languages.rust.targets. add it so rustc and rust-std are available for the toolchain."
-      craneLib;
 in
 {
   options.languages.rust.crane = {
@@ -119,7 +75,50 @@ in
   };
 
   config.languages.rust.crane = {
-    lib = mkLib { };
-    inherit mkLib mkPkgs;
+    lib = cfg.crane.mkLib { };
+
+    # builds (or reuses) the pkgs set that a crane build should run against.
+    #
+    # for the native host this is just the shell's own `pkgs`. for a foreign
+    # target, nixpkgs is re-instantiated, carrying over devenv's overlays and
+    # nixpkgs config so cross builds see the same package set (including
+    # rust-overlay, if configured) as the dev shell.
+    mkPkgs =
+      {
+        crossSystem ? null,
+      }:
+      if crossSystem == null then
+        pkgs
+      else
+        import pkgs.path {
+          localSystem = pkgs.stdenv.buildPlatform.system;
+          inherit crossSystem;
+          overlays = config.overlays;
+          inherit (pkgs) config;
+        };
+
+    # builds a craneLib instance pinned to the devenv-managed rust toolchain.
+    #
+    # passing a constant function (rather than the toolchain package directly)
+    # to `overrideToolchain` satisfies crane's splicing requirements for cross
+    # builds without any additional cost, since the toolchain itself is a
+    # build-platform tool that is valid across every splice.
+    mkLib =
+      {
+        crossSystem ? null,
+        # lets callers that already hold the target pkgs (e.g. from `mkPkgs`)
+        # skip re-instantiating nixpkgs, which isn't memoized across calls
+        pkgs ? cfg.crane.mkPkgs { inherit crossSystem; },
+      }:
+      let
+        craneLib = (crane.mkLib pkgs).overrideToolchain (_: cfg.toolchainPackage);
+
+        hostPlatform = pkgs.stdenv.hostPlatform;
+        isCross = pkgs.stdenv.buildPlatform != hostPlatform;
+        rustcTarget = hostPlatform.rust.rustcTarget;
+      in
+      lib.warnIf (isCross && !(builtins.elem rustcTarget cfg.targets))
+        "languages.rust.crane.mkLib is cross-compiling to '${rustcTarget}', but that target isn't in languages.rust.targets. add it so rustc and rust-std are available for the toolchain."
+        craneLib;
   };
 }

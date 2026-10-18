@@ -7,121 +7,6 @@
 let
   cfg = config.languages.rust.dioxus;
   craneCfg = config.languages.rust.crane;
-
-  # builds a fullstack Dioxus bundle with a single `dx bundle --fullstack`
-  # run, which drives cargo itself for both the server and wasm client.
-  #
-  # there's deliberately no crane `buildDepsOnly` step: dx compiles each
-  # side under its own generated cargo profile (`server-release`,
-  # `web-release`), so dependencies prebuilt under any other profile would
-  # never be reused and would only add a second full dependency build.
-  import' =
-    path: args:
-    let
-      crossSystem = args.crossSystem or null;
-      targetPkgs = craneCfg.mkPkgs { inherit crossSystem; };
-      craneLib = craneCfg.mkLib { pkgs = targetPkgs; };
-      serverTarget = targetPkgs.stdenv.hostPlatform.rust.rustcTarget;
-
-      pname = (lib.importTOML (path + "/Cargo.toml")).package.name;
-
-      # crane's crateNameFromCargoToml only reads the app's own Cargo.toml,
-      # so `version.workspace = true` would fall back to its placeholder
-      version = craneCfg.crateVersion path;
-
-      tailwind = cfg.mkTailwindSteps path;
-
-      # rooted at the workspace (or the app itself, when it's standalone),
-      # since cargo needs the workspace's Cargo.lock and sibling crates.
-      # Dioxus.toml is already covered by crane's toml filter; assets are
-      # read by the `asset!` macro at compile time
-      src =
-        args.src or (craneCfg.mkSource (craneCfg.workspaceRoot path) {
-          extraPaths = [ (path + "/assets") ] ++ tailwind.extraPaths ++ (args.extraPaths or [ ]);
-          extraFileTypes = args.extraFileTypes or [ ];
-        });
-      cargoVendorDir = args.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });
-
-      splicedArgs = craneCfg.spliceCrateExpression targetPkgs (args.crateExpression or (_: { }));
-      buildInputs = (args.buildInputs or [ ]) ++ splicedArgs.buildInputs;
-      extraNativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ splicedArgs.nativeBuildInputs;
-
-      # the platform flags matter: an explicit @server only overrides dx's
-      # bundle format, so without --server it autodetects the platform from
-      # default features (usually "web") and builds the server with the web
-      # renderer, which panics at startup
-      #
-      # --debug-symbols defaults to true even for release builds, which makes
-      # dx run wasm-opt with --debuginfo. binaryen aborts on that for
-      # typical dioxus modules, and dx then silently ships the unoptimized
-      # wasm (about 2.5x larger for the template).
-      dxTargetArgs = lib.concatStringsSep " " [
-        "@client --web --target ${cfg.clientTarget} --debug-symbols=false"
-        "@server --server --target ${serverTarget}"
-      ];
-    in
-    craneLib.mkCargoDerivation (
-      {
-        inherit
-          src
-          cargoVendorDir
-          pname
-          version
-          buildInputs
-          ;
-
-        # see above for why nothing is prebuilt
-        cargoArtifacts = null;
-        strictDeps = true;
-        doInstallCargoArtifacts = false;
-
-        nativeBuildInputs = [
-          cfg.cliPackage
-          cfg.wasmBindgenPackage
-          pkgs.binaryen
-          # a compiled wrapper built for the server's platform, unlike
-          # makeWrapper's bash script, whose shebang points at the build
-          # platform's bash (and which would need bash in container images)
-          targetPkgs.makeBinaryWrapper
-          # std's panic locations and dependencies' file!() paths otherwise
-          # keep the whole toolchain and every vendored crate in the runtime
-          # closure; craneLib.buildPackage adds these hooks, but
-          # mkCargoDerivation doesn't
-          craneLib.removeReferencesToRustToolchainHook
-          craneLib.removeReferencesToVendoredSourcesHook
-        ]
-        ++ tailwind.nativeBuildInputs
-        ++ extraNativeBuildInputs;
-
-        buildPhaseCargoCommand = ''
-          export HOME=$TMPDIR
-          export DIOXUS_TELEMETRY_ENABLED=false
-          export CARGO_NET_OFFLINE=true
-          # tell dx to use the PATH wasm-opt instead of downloading its own copy
-          export NO_DOWNLOADS=1
-
-          ${tailwind.preBundle}
-          dx bundle --package ${pname} --release --fullstack --locked --offline ${dxTargetArgs} ${args.dxExtraArgs or ""}
-
-          ${tailwind.postBundle}
-        '';
-
-        installPhaseCommand = ''
-          mkdir -p $out/bin
-
-          dxOut="target/dx/${pname}/release/web"
-          cp "$dxOut/server" $out/bin/${pname}
-          cp -r "$dxOut/public" $out/bin/public
-
-          wrapProgram $out/bin/${pname} \
-            --set-default IP 0.0.0.0 \
-            --set-default PORT 8080
-        '';
-
-        meta.mainProgram = pname;
-      }
-      // lib.optionalAttrs (args ? env) { inherit (args) env; }
-    );
 in
 {
   imports = [ ./tailwind.nix ];
@@ -208,14 +93,130 @@ in
 
   config = lib.mkMerge [
     {
+      # builds a fullstack Dioxus bundle with a single `dx bundle --fullstack`
+      # run, which drives cargo itself for both the server and wasm client.
+      #
+      # there's deliberately no crane `buildDepsOnly` step: dx compiles each
+      # side under its own generated cargo profile (`server-release`,
+      # `web-release`), so dependencies prebuilt under any other profile would
+      # never be reused and would only add a second full dependency build.
+      #
       # defined unconditionally so forgetting `enable` gets a clear error
       # instead of an undefined option
       languages.rust.dioxus.import =
         path: args:
-        lib.throwIfNot cfg.enable ''
-          languages.rust.dioxus.import was called, but languages.rust.dioxus.enable isn't set.
-          set `languages.rust.dioxus.enable = true;` so the dioxus cli and wasm target checks are set up.
-        '' (import' path args);
+        lib.throwIfNot cfg.enable
+          ''
+            languages.rust.dioxus.import was called, but languages.rust.dioxus.enable isn't set.
+            set `languages.rust.dioxus.enable = true;` so the dioxus cli and wasm target checks are set up.
+          ''
+          (
+            let
+              crossSystem = args.crossSystem or null;
+              targetPkgs = craneCfg.mkPkgs { inherit crossSystem; };
+              craneLib = craneCfg.mkLib { pkgs = targetPkgs; };
+              serverTarget = targetPkgs.stdenv.hostPlatform.rust.rustcTarget;
+
+              pname = (lib.importTOML (path + "/Cargo.toml")).package.name;
+
+              # crane's crateNameFromCargoToml only reads the app's own Cargo.toml,
+              # so `version.workspace = true` would fall back to its placeholder
+              version = craneCfg.crateVersion path;
+
+              tailwind = cfg.mkTailwindSteps path;
+
+              # rooted at the workspace (or the app itself, when it's standalone),
+              # since cargo needs the workspace's Cargo.lock and sibling crates.
+              # Dioxus.toml is already covered by crane's toml filter; assets are
+              # read by the `asset!` macro at compile time
+              src =
+                args.src or (craneCfg.mkSource (craneCfg.workspaceRoot path) {
+                  extraPaths = [ (path + "/assets") ] ++ tailwind.extraPaths ++ (args.extraPaths or [ ]);
+                  extraFileTypes = args.extraFileTypes or [ ];
+                });
+              cargoVendorDir = args.cargoVendorDir or (craneLib.vendorCargoDeps { inherit src; });
+
+              splicedArgs = craneCfg.spliceCrateExpression targetPkgs (args.crateExpression or (_: { }));
+              buildInputs = (args.buildInputs or [ ]) ++ splicedArgs.buildInputs;
+              extraNativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ splicedArgs.nativeBuildInputs;
+
+              # the platform flags matter: an explicit @server only overrides dx's
+              # bundle format, so without --server it autodetects the platform from
+              # default features (usually "web") and builds the server with the web
+              # renderer, which panics at startup
+              #
+              # --debug-symbols defaults to true even for release builds, which makes
+              # dx run wasm-opt with --debuginfo. binaryen aborts on that for
+              # typical dioxus modules, and dx then silently ships the unoptimized
+              # wasm (about 2.5x larger for the template).
+              dxTargetArgs = lib.concatStringsSep " " [
+                "@client --web --target ${cfg.clientTarget} --debug-symbols=false"
+                "@server --server --target ${serverTarget}"
+              ];
+            in
+            craneLib.mkCargoDerivation (
+              {
+                inherit
+                  src
+                  cargoVendorDir
+                  pname
+                  version
+                  buildInputs
+                  ;
+
+                # see above for why nothing is prebuilt
+                cargoArtifacts = null;
+                strictDeps = true;
+                doInstallCargoArtifacts = false;
+
+                nativeBuildInputs = [
+                  cfg.cliPackage
+                  cfg.wasmBindgenPackage
+                  pkgs.binaryen
+                  # a compiled wrapper built for the server's platform, unlike
+                  # makeWrapper's bash script, whose shebang points at the build
+                  # platform's bash (and which would need bash in container images)
+                  targetPkgs.makeBinaryWrapper
+                  # std's panic locations and dependencies' file!() paths otherwise
+                  # keep the whole toolchain and every vendored crate in the runtime
+                  # closure; craneLib.buildPackage adds these hooks, but
+                  # mkCargoDerivation doesn't
+                  craneLib.removeReferencesToRustToolchainHook
+                  craneLib.removeReferencesToVendoredSourcesHook
+                ]
+                ++ tailwind.nativeBuildInputs
+                ++ extraNativeBuildInputs;
+
+                buildPhaseCargoCommand = ''
+                  export HOME=$TMPDIR
+                  export DIOXUS_TELEMETRY_ENABLED=false
+                  export CARGO_NET_OFFLINE=true
+                  # tell dx to use the PATH wasm-opt instead of downloading its own copy
+                  export NO_DOWNLOADS=1
+
+                  ${tailwind.preBundle}
+                  dx bundle --package ${pname} --release --fullstack --locked --offline ${dxTargetArgs} ${args.dxExtraArgs or ""}
+
+                  ${tailwind.postBundle}
+                '';
+
+                installPhaseCommand = ''
+                  mkdir -p $out/bin
+
+                  dxOut="target/dx/${pname}/release/web"
+                  cp "$dxOut/server" $out/bin/${pname}
+                  cp -r "$dxOut/public" $out/bin/public
+
+                  wrapProgram $out/bin/${pname} \
+                    --set-default IP 0.0.0.0 \
+                    --set-default PORT 8080
+                '';
+
+                meta.mainProgram = pname;
+              }
+              // lib.optionalAttrs (args ? env) { inherit (args) env; }
+            )
+          );
     }
 
     (lib.mkIf cfg.enable {

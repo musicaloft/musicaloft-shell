@@ -1,5 +1,16 @@
 { lib, ... }:
-let
+{
+  options.languages.rust.crane.mkChecks = lib.mkOption {
+    type = lib.types.functionTo lib.types.raw;
+    readOnly = true;
+    internal = true;
+    description = ''
+      Builds a set of crane checks (`clippy`, `doc`, `fmt`, `nextest`,
+      `taplo`) from the result of `languages.rust.crane.mkArgs`, all reusing
+      the same `cargoArtifacts`.
+    '';
+  };
+
   # builds a set of crane checks that all reuse the same cargoArtifacts as
   # the package they're checking, so running `nix flake check` (or wiring
   # these into `outputs`/`git-hooks` yourself) never triggers a redundant
@@ -7,7 +18,7 @@ let
   #
   # returned, not auto-wired: callers decide whether/how these feed into
   # `outputs`, `git-hooks`, or `enterTest`.
-  mkChecks =
+  config.languages.rust.crane.mkChecks =
     {
       craneLib,
       commonArgs,
@@ -50,18 +61,4 @@ let
 
       taplo = craneLib.taploFmt formatArgs;
     };
-in
-{
-  options.languages.rust.crane.mkChecks = lib.mkOption {
-    type = lib.types.functionTo lib.types.raw;
-    readOnly = true;
-    internal = true;
-    description = ''
-      Builds a set of crane checks (`clippy`, `doc`, `fmt`, `nextest`,
-      `taplo`) from the result of `languages.rust.crane.mkArgs`, all reusing
-      the same `cargoArtifacts`.
-    '';
-  };
-
-  config.languages.rust.crane.mkChecks = mkChecks;
 }

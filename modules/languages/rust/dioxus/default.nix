@@ -23,10 +23,11 @@ let
       craneLib = craneCfg.mkLib { pkgs = targetPkgs; };
       serverTarget = targetPkgs.stdenv.hostPlatform.rust.rustcTarget;
 
-      inherit (craneLib.crateNameFromCargoToml { cargoToml = path + "/Cargo.toml"; })
-        pname
-        version
-        ;
+      pname = (lib.importTOML (path + "/Cargo.toml")).package.name;
+
+      # crane's crateNameFromCargoToml only reads the app's own Cargo.toml,
+      # so `version.workspace = true` would fall back to its placeholder
+      version = craneCfg.crateVersion path;
 
       tailwind = cfg.mkTailwindSteps path;
 

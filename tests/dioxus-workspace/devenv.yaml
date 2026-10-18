@@ -1,0 +1,32 @@
+inputs:
+  # musicaloft-shell's build system of choice for Rust
+  crane:
+    url: github:ipetkov/crane
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # nix-configured git hooks, required by musicaloft-shell
+  git-hooks:
+    url: github:cachix/git-hooks.nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # for packages to include in development environment
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+
+  # up-to-date Rust toolchains, including nightly
+  rust-overlay:
+    url: github:oxalica/rust-overlay
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+  # codebase formatting, required by musicaloft-shell
+  treefmt-nix:
+    url: github:numtide/treefmt-nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs

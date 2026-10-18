@@ -97,15 +97,8 @@ let
 
           # crane's crateNameFromCargoToml only reads the member's own
           # Cargo.toml, so `version.workspace = true` would fall back to its
-          # placeholder. resolve inheritance the way cargo does: only an
-          # explicit `version.workspace = true` inherits, and a member with
-          # no version at all gets cargo's own default.
-          memberVersion = memberCargoToml.package.version or "0.0.0";
-          version =
-            if builtins.isAttrs memberVersion then
-              rootCargoToml.workspace.package.version or "0.0.0"
-            else
-              memberVersion;
+          # placeholder
+          version = cfg.crateVersion (path + "/${dir}");
           memberArgs = cfg.mkArgs path (
             (removeAttrs buildArgs [ "cargoExtraArgs" ])
             // {
@@ -145,6 +138,7 @@ in
     ./args.nix
     ./checks.nix
     ./lib.nix
+    ./manifest.nix
     ./source.nix
     ./splice.nix
   ];

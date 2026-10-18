@@ -31,10 +31,12 @@ let
 
       tailwind = cfg.mkTailwindSteps path;
 
+      # rooted at the workspace (or the app itself, when it's standalone),
+      # since cargo needs the workspace's Cargo.lock and sibling crates.
       # Dioxus.toml is already covered by crane's toml filter; assets are
       # read by the `asset!` macro at compile time
       src =
-        args.src or (craneCfg.mkSource path {
+        args.src or (craneCfg.mkSource (craneCfg.workspaceRoot path) {
           extraPaths = [ (path + "/assets") ] ++ tailwind.extraPaths ++ (args.extraPaths or [ ]);
           extraFileTypes = args.extraFileTypes or [ ];
         });
@@ -164,6 +166,11 @@ in
         `$out/bin/<pname>` (the server binary, wrapped with `IP`/`PORT`
         defaults) alongside `$out/bin/public` (the prebuilt web assets).
 
+        The app can also be a member of a Cargo workspace, such as the
+        `web` crate of a workspace split into `web`, `ui`, and `api`
+        crates. The whole workspace is then built from its root, where its
+        Cargo.lock lives.
+
         The `args` attribute set accepts:
 
         - `crossSystem`: a Nixpkgs `crossSystem` value to cross-compile the
@@ -173,8 +180,13 @@ in
           extra `buildInputs`/`nativeBuildInputs`, spliced onto the correct
           build/host/target `pkgs` when cross-compiling.
         - `extraPaths`, `extraFileTypes`: extra files to keep in the source
-          filter, as for `languages.rust.crane.import`. `assets/` and toml
-          files (including `Dioxus.toml`) are always included.
+          filter, as for `languages.rust.crane.import`. String paths are
+          relative to the workspace root (the app's own directory, unless
+          it's a workspace member), so list other crates' assets here. The
+          app's `assets/`, its Tailwind files, and toml files (including
+          `Dioxus.toml`) are always included.
+        - `src`: a source to build instead of the filtered default, rooted
+          at the workspace root.
         - `dxExtraArgs`: extra arguments appended to the `dx bundle`
           invocation.
 

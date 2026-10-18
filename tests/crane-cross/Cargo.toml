@@ -1,0 +1,20 @@
+[package]
+name = "crane-cross"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+# cdylib for the bare wasm module, rlib for the binary
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+libz-sys = { version = "1", optional = true }
+
+[build-dependencies]
+pkg-config = { version = "0.3", optional = true }
+
+[features]
+# links the target's zlib, to test that crateExpression's build inputs are
+# spliced onto the right platforms when cross-compiling
+zlib = ["dep:libz-sys", "dep:pkg-config"]

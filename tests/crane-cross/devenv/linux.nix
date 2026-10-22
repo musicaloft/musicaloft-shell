@@ -1,7 +1,7 @@
 {
   config,
+  lib,
   pkgs,
-  testLib,
   ...
 }:
 let
@@ -41,36 +41,21 @@ in
   outputs.linux = {
     inherit native aarch64 musl;
     checks = native.passthru.checks;
+  };
 
-    tests = {
-      native = testLib.expectOutput {
-        name = "crane-cross-native";
-        command = "${native}/bin/crane-cross";
-        expected = "hello from x86_64-unknown-linux-gnu with zlib ${pkgs.zlib.version}, 2 + 3 = 5";
-      };
+  # what .test.sh inspects. these are only set while testing, so entering
+  # the shell normally doesn't build them
+  packages = lib.mkIf config.devenv.isTesting [ pkgs.file ];
+  env = lib.mkIf config.devenv.isTesting {
+    TEST_NATIVE = "${native}";
+    TEST_AARCH64 = "${aarch64}";
+    TEST_MUSL = "${musl}";
+    TEST_MUSL_SYSTEM = muslSystem;
 
-      # runs under qemu's user mode emulation
-      aarch64 = testLib.expectOutput {
-        name = "crane-cross-aarch64";
-        command = "${aarch64Pkgs.stdenv.hostPlatform.emulator pkgs} ${aarch64}/bin/crane-cross";
-        expected = "hello from aarch64-unknown-linux-gnu with zlib ${aarch64Pkgs.zlib.version}, 2 + 3 = 5";
-      };
+    TEST_ZLIB_VERSION = pkgs.zlib.version;
+    TEST_AARCH64_ZLIB_VERSION = aarch64Pkgs.zlib.version;
 
-      # x86_64 machines run musl binaries natively
-      musl = testLib.expectOutput {
-        name = "crane-cross-musl";
-        command = "${musl}/bin/crane-cross";
-        expected = "hello from ${muslSystem}, 2 + 3 = 5";
-      };
-
-      # rust links musl binaries statically, which is what makes them
-      # portable
-      musl-static = testLib.expectOutput {
-        name = "crane-cross-musl-static";
-        command = "file --brief ${musl}/bin/crane-cross | grep --only-matching static | head -n 1";
-        expected = "static";
-        nativeBuildInputs = [ pkgs.file ];
-      };
-    };
+    # runs the aarch64 binary under qemu's user mode emulation
+    TEST_AARCH64_EMULATOR = aarch64Pkgs.stdenv.hostPlatform.emulator pkgs;
   };
 }

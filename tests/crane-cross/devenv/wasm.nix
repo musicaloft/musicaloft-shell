@@ -1,7 +1,7 @@
 {
   config,
+  lib,
   pkgs,
-  testLib,
   ...
 }:
 let
@@ -12,9 +12,6 @@ let
   # do), linking with the toolchain's bundled rust-lld
   wasm32 = crane.import ../. { CARGO_BUILD_TARGET = "wasm32-unknown-unknown"; };
   wasi = crane.import ../. { CARGO_BUILD_TARGET = "wasm32-wasip1"; };
-
-  # the sandbox has no writable home for wasmtime's compilation cache
-  wasmtimeRun = "${pkgs.wasmtime}/bin/wasmtime run -C cache=n";
 in
 {
   languages.rust.targets = [
@@ -24,20 +21,13 @@ in
 
   outputs.wasm = {
     inherit wasm32 wasi;
+  };
 
-    tests = {
-      # the bare module has no entry point, so call its exported function
-      wasm32 = testLib.expectOutput {
-        name = "crane-cross-wasm32";
-        command = "${wasmtimeRun} --invoke add ${wasm32}/lib/crane_cross.wasm 2 3";
-        expected = "5";
-      };
-
-      wasi = testLib.expectOutput {
-        name = "crane-cross-wasi";
-        command = "${wasmtimeRun} ${wasi}/bin/crane-cross.wasm";
-        expected = "hello from wasm32-wasip1, 2 + 3 = 5";
-      };
-    };
+  # what .test.sh inspects. these are only set while testing, so entering
+  # the shell normally doesn't build them
+  packages = lib.mkIf config.devenv.isTesting [ pkgs.wasmtime ];
+  env = lib.mkIf config.devenv.isTesting {
+    TEST_WASM32 = "${wasm32}";
+    TEST_WASI = "${wasi}";
   };
 }

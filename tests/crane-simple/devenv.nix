@@ -1,4 +1,4 @@
-{ config, testLib, ... }:
+{ config, lib, ... }:
 let
   inherit (config.languages.rust) crane;
 
@@ -24,41 +24,15 @@ in
     inherit shouting;
     checks = package.passthru.checks;
 
-    tests = {
-      default = testLib.expectOutput {
-        name = "crane-simple";
-        command = "${package}/bin/crane-simple";
-        expected = "hello from Crane Simple!";
-      };
+    # the features change what the tests compile, so they're checked again
+    shouting-nextest = shouting.passthru.checks.nextest;
+  };
 
-      shouting = testLib.expectOutput {
-        name = "crane-simple-shouting";
-        command = "${shouting}/bin/crane-simple";
-        expected = "HELLO FROM CRANE SIMPLE!";
-      };
-
-      shouting-checks = shouting.passthru.checks.nextest;
-
-      source = testLib.expectSource {
-        name = "crane-simple";
-        src = package.passthru.commonArgs.src;
-        includes = [
-          "Cargo.lock"
-          "Cargo.toml"
-          "src/greeting.txt"
-          "src/lib.rs"
-          "src/main.rs"
-        ];
-        excludes = [
-          ".cargo/config.toml"
-          ".devenv"
-          ".rustfmt.toml"
-          "devenv.lock"
-          "devenv.nix"
-          "devenv.yaml"
-          "target"
-        ];
-      };
-    };
+  # what .test.sh inspects. these are only set while testing, so entering
+  # the shell normally doesn't build them
+  env = lib.mkIf config.devenv.isTesting {
+    TEST_PACKAGE = "${package}";
+    TEST_SHOUTING = "${shouting}";
+    TEST_SOURCE = "${package.passthru.commonArgs.src}";
   };
 }

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   # import musicaloft-shell straight from this checkout. consumers get the
   # same module through the `musicaloft-shell` input in their devenv.yaml,
@@ -7,8 +7,10 @@
   imports = [ ../../devenv.nix ];
 
   # the test projects live inside musicaloft-shell's own git repository, so
-  # installing their hooks would replace the repository's own hooks
-  git-hooks.install.enable = false;
+  # `devenv test` would otherwise install their hooks over the repository's
+  # own, and run every hook and formatter against all of its files
+  git-hooks.enable = lib.mkForce false;
+  treefmt.enable = lib.mkForce false;
 
   _module.args.testLib = import ./lib.nix { inherit pkgs; };
 }

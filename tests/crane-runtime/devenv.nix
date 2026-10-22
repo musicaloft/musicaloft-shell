@@ -1,7 +1,7 @@
 {
   config,
+  lib,
   pkgs,
-  testLib,
   ...
 }:
 let
@@ -31,13 +31,12 @@ in
   outputs = {
     default = loaded;
     checks = loaded.passthru.checks;
+  };
 
-    tests = {
-      loaded = testLib.expectOutput {
-        name = "crane-runtime-loaded";
-        command = "${loaded}/bin/crane-runtime";
-        expected = "loaded zlib ${pkgs.zlib.version}";
-      };
-    };
+  # what .test.sh inspects. these are only set while testing, so entering
+  # the shell normally doesn't build them
+  env = lib.mkIf config.devenv.isTesting {
+    TEST_PACKAGE = "${loaded}";
+    TEST_ZLIB_VERSION = pkgs.zlib.version;
   };
 }

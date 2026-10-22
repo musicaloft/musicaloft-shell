@@ -44,7 +44,10 @@ in
       };
     };
 
-    languages.rust.components = lib.mkOptionDefault [ "llvm-tools-preview" ];
+    languages.rust.components = lib.mkOptionDefault [
+      "llvm-tools-preview"
+      "rust-analyzer"
+    ];
 
     git-hooks.hooks.clippy = {
       enable = true;

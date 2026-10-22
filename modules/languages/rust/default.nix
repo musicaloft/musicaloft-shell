@@ -67,12 +67,16 @@ in
       cargo-nextest
     ];
 
-    treefmt.config.programs = {
-      rustfmt = {
+    treefmt.config = {
+      programs.rustfmt = {
         enable = true;
         package = toolchain;
       };
-      taplo.enable = true;
+      settings.formatter.tombi = {
+        command = lib.getExe pkgs.tombi;
+        options = [ "format" ];
+        includes = [ "*.toml" ];
+      };
     };
   };
 }

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# Builds every output of musicaloft-shell's test projects, which includes
-# their packages, crane checks, and tests.
+# Builds and tests every one of musicaloft-shell's test projects.
+#
+# Each project is first built with `devenv build`, which builds every
+# output: its packages and crane checks. Then `devenv test` runs the
+# project's .test.sh against the built packages.
 #
 # Usage: tests/run.sh [project...]
 #
@@ -37,7 +40,19 @@ for project in "${projects[@]}"; do
 
   # keep going past a failed derivation, so one run reports every failure
   # in the project instead of only the first
-  if (cd "$dir" && devenv --nix-option keep-going true build); then
+  ok=true
+  if ! (cd "$dir" && devenv --nix-option keep-going true build); then
+    ok=false
+  fi
+
+  # test even if the build failed, since a failing check (clippy, say)
+  # doesn't stop the packages from being tested
+  echo "==> testing $project"
+  if ! (cd "$dir" && devenv test); then
+    ok=false
+  fi
+
+  if $ok; then
     passed+=("$project")
   else
     failed+=("$project")

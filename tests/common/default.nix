@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, ... }:
 {
   # import musicaloft-shell straight from this checkout. consumers get the
   # same module through the `musicaloft-shell` input in their devenv.yaml,
@@ -11,6 +11,4 @@
   # own, and run every hook and formatter against all of its files
   git-hooks.enable = lib.mkForce false;
   treefmt.enable = lib.mkForce false;
-
-  _module.args.testLib = import ./lib.nix { inherit pkgs; };
 }

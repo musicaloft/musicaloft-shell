@@ -6,9 +6,6 @@
   # working tree.
   imports = [ ../../devenv.nix ];
 
-  # the test projects live inside musicaloft-shell's own git repository, so
-  # `devenv test` would otherwise install their hooks over the repository's
-  # own, and run every hook and formatter against all of its files
-  git-hooks.enable = lib.mkForce false;
-  treefmt.enable = lib.mkForce false;
+  # disable cachix pushing in tests so builds aren't pushed
+  cachix.push = lib.mkForce null;
 }

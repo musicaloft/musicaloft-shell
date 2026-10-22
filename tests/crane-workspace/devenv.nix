@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  testLib,
   ...
 }:
 let
@@ -14,8 +13,10 @@ let
   # cross-compiled at the cargo level, like crane-cross's wasm builds
   wasi = crane.importWorkspace ./. { CARGO_BUILD_TARGET = "wasm32-wasip1"; };
 
-  # the sandbox has no writable home for wasmtime's compilation cache
-  wasmtimeRun = "${pkgs.wasmtime}/bin/wasmtime run -C cache=n";
+  # joins `name=value` pairs into a string for .test.sh to compare, which
+  # is simpler than parsing json in bash
+  toPairs =
+    f: lib.concatStringsSep " " (lib.mapAttrsToList (name: package: "${name}=${f package}") packages);
 in
 {
   imports = [ ../common ];
@@ -29,61 +30,22 @@ in
   outputs = packages // {
     inherit (workspace) checks deps;
     wasi = wasi.packages;
+  };
 
-    tests = {
-      # crates/experimental matches the `crates/*` glob, but is excluded
-      members = testLib.expectEqual {
-        name = "crane-workspace-members";
-        actual = lib.attrNames packages;
-        expected = [
-          "workspace-cli"
-          "workspace-core"
-          "workspace-stats"
-        ];
-      };
+  # what .test.sh inspects. these are only set while testing, so entering
+  # the shell normally doesn't build them
+  packages = lib.mkIf config.devenv.isTesting [ pkgs.wasmtime ];
+  env = lib.mkIf config.devenv.isTesting {
+    TEST_CLI = "${packages.workspace-cli}";
+    TEST_STATS = "${packages.workspace-stats}";
+    TEST_WASI_CLI = "${wasi.packages.workspace-cli}";
+    TEST_WASI_STATS = "${wasi.packages.workspace-stats}";
 
-      # cargo only inherits the workspace version when a member opts in, and
-      # defaults to 0.0.0 when a member sets no version at all
-      versions = testLib.expectEqual {
-        name = "crane-workspace-versions";
-        actual = lib.mapAttrs (_: package: package.version) packages;
-        expected = {
-          workspace-cli = "1.2.3";
-          workspace-core = "0.3.0";
-          workspace-stats = "0.0.0";
-        };
-      };
+    TEST_MEMBERS = lib.concatStringsSep " " (lib.attrNames packages);
+    TEST_VERSIONS = toPairs (package: package.version);
 
-      # every member must reuse the single workspace-wide dependency build
-      shared-deps = testLib.expectEqual {
-        name = "crane-workspace-shared-deps";
-        actual = lib.mapAttrs (_: package: package.passthru.commonArgs.cargoArtifacts.drvPath) packages;
-        expected = lib.mapAttrs (_: _: workspace.deps.drvPath) packages;
-      };
-
-      cli = testLib.expectOutput {
-        name = "workspace-cli";
-        command = "${packages.workspace-cli}/bin/workspace-cli";
-        expected = "[Workspace Cli] ready";
-      };
-
-      stats = testLib.expectOutput {
-        name = "workspace-stats";
-        command = "${packages.workspace-stats}/bin/workspace-stats";
-        expected = "5 words";
-      };
-
-      wasi-cli = testLib.expectOutput {
-        name = "workspace-cli-wasi";
-        command = "${wasmtimeRun} ${wasi.packages.workspace-cli}/bin/workspace-cli.wasm";
-        expected = "[Workspace Cli] ready";
-      };
-
-      wasi-stats = testLib.expectOutput {
-        name = "workspace-stats-wasi";
-        command = "${wasmtimeRun} ${wasi.packages.workspace-stats}/bin/workspace-stats.wasm";
-        expected = "5 words";
-      };
-    };
+    # every member must reuse the single workspace-wide dependency build
+    TEST_MEMBER_DEPS = toPairs (package: package.passthru.commonArgs.cargoArtifacts.drvPath);
+    TEST_WORKSPACE_DEPS = workspace.deps.drvPath;
   };
 }

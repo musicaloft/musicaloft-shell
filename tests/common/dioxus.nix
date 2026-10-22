@@ -3,7 +3,10 @@
   # the template's overlay pins dx and wasm-bindgen-cli to the versions in
   # its Cargo.lock, and the dioxus test projects pin the same versions, so
   # they're tested against exactly what the template ships with
-  imports = [ ../../templates/dioxus/devenv/overlay.nix ];
+  imports = [
+    ../../templates/dioxus/devenv/overlay.nix
+    ./server.nix
+  ];
 
   languages.rust = {
     enable = true;

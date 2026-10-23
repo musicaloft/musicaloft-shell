@@ -42,6 +42,21 @@ in
         use_try_shorthand = true;
         wrap_comments = true;
       };
+
+      # nix's `fromTOML` only parses TOML 1.0, and Cargo.toml gets read by
+      # nix (crane, `lib.importTOML`), so tombi mustn't emit TOML 1.1 syntax
+      # like multiline inline tables. the cargo schema declares v1.1.0, which
+      # outranks the root `toml-version`, so it needs its own override.
+      ".tombi.toml".toml = {
+        toml-version = "v1.0.0";
+        schemas = [
+          {
+            toml-version = "v1.0.0";
+            path = "tombi://www.schemastore.org/cargo.json";
+            include = [ "Cargo.toml" ];
+          }
+        ];
+      };
     };
 
     languages.rust.components = lib.mkOptionDefault [

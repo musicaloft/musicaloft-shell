@@ -11,6 +11,7 @@ devenv.local.yaml
 **/.cargo/mutants.toml
 **/.cargo/nextest.toml
 .rustfmt.toml
+.tombi.toml
 
 # dx bundle output
 dist/

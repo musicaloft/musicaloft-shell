@@ -1,5 +1,8 @@
 { lib, ... }:
 let
+  cargoTomlAt = path: (lib.importTOML (path + "/Cargo.toml"));
+  cargoLockExistsAt = path: builtins.pathExists (path + "/Cargo.lock");
+
   # finds the directory cargo builds the crate at `path` from: the crate
   # itself when it's standalone, or the root of the workspace it belongs
   # to. cargo keeps Cargo.lock in exactly that directory, so the search
@@ -7,7 +10,7 @@ let
   # inside the project's own source tree.
   workspaceRoot =
     path:
-    if builtins.pathExists (path + "/Cargo.lock") then
+    if cargoLockExistsAt path then
       path
     else if dirOf path == path then
       throw ''
@@ -24,11 +27,11 @@ let
   crateVersion =
     path:
     let
-      version = (lib.importTOML (path + "/Cargo.toml")).package.version or "0.0.0";
+      version = (cargoTomlAt path).package.version or "0.0.0";
       root = workspaceRoot path;
     in
     if builtins.isAttrs version then
-      (lib.importTOML (root + "/Cargo.toml")).workspace.package.version or (throw ''
+      (cargoTomlAt root).workspace.package.version or (throw ''
         ${toString path}/Cargo.toml inherits its version from the workspace, but
         ${toString root}/Cargo.toml doesn't set workspace.package.version.
       '')

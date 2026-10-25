@@ -10,6 +10,7 @@ let
 
   package = crane.import ./. args;
   shouting = crane.import ./. (args // { features = [ "shout" ]; });
+  overridden = crane.import ./. (args // { meta.mainProgram = "custom-name"; });
 in
 {
   imports = [ ../common ];
@@ -34,5 +35,11 @@ in
     TEST_PACKAGE = "${package}";
     TEST_SHOUTING = "${shouting}";
     TEST_SOURCE = "${package.passthru.commonArgs.src}";
+
+    # the inferred main program, one set by the caller, and the dependency
+    # build's, which must not claim one
+    TEST_MAIN_PROGRAM = package.meta.mainProgram;
+    TEST_MAIN_PROGRAM_OVERRIDE = overridden.meta.mainProgram;
+    TEST_DEPS_MAIN_PROGRAM = package.passthru.cargoArtifacts.meta.mainProgram or "none";
   };
 }

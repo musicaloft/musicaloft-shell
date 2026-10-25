@@ -39,6 +39,12 @@ the failure modes this avoids.
 - `passthru.craneLib`, `passthru.commonArgs`, `passthru.cargoArtifacts` —
   escape hatches for composing further crane derivations by hand.
 
+The package's `meta.mainProgram` is inferred from its `Cargo.toml` the way
+`cargo run` picks a binary: `package.default-run` if set, otherwise the only
+`[[bin]]` target, otherwise the package name. This keeps `lib.getExe` from
+warning. Set `meta.mainProgram` in `args` to override it. It's applied to the
+package only, not to the dependency build or checks.
+
 The package itself defaults to `doCheck = false`, since its tests already
 run in `passthru.checks.nextest`; pass `doCheck = true` to also run
 `cargo test` inside the package build. Either way, the dependency build

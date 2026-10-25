@@ -37,6 +37,20 @@ let
       '')
     else
       version;
+
+  # infers the name of the executable `lib.getExe` should run for the crate
+  # at `path`, the way cargo picks one for `cargo run`: an explicit
+  # `default-run` wins, then a lone `[[bin]]` target, and otherwise the
+  # package's own name, which is what cargo names the binary it discovers
+  # from src/main.rs.
+  crateMainProgram =
+    path:
+    let
+      manifest = cargoTomlAt path;
+      binNames = map (bin: bin.name) (manifest.bin or [ ]);
+    in
+    manifest.package.default-run
+      or (if builtins.length binNames == 1 then builtins.head binNames else manifest.package.name);
 in
 {
   options.languages.rust.crane = {
@@ -62,9 +76,21 @@ in
         defaulting to `0.0.0` when no version is set.
       '';
     };
+
+    crateMainProgram = lib.mkOption {
+      type = lib.types.functionTo lib.types.str;
+      readOnly = true;
+      internal = true;
+      description = ''
+        Infers the name of the crate's main executable, for
+        `meta.mainProgram`. This is the package's `default-run` if set,
+        otherwise the name of its only `[[bin]]` target, otherwise the
+        package's own name.
+      '';
+    };
   };
 
   config.languages.rust.crane = {
-    inherit crateVersion workspaceRoot;
+    inherit crateMainProgram crateVersion workspaceRoot;
   };
 }

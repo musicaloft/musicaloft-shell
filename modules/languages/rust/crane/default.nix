@@ -145,6 +145,12 @@ in
         pkg = result.craneLib.buildPackage (result.commonArgs // { doCheck = args.doCheck or false; });
       in
       pkg.overrideAttrs (old: {
+        # caller-provided meta wins over the inferred main program
+        meta = {
+          mainProgram = cfg.crateMainProgram path;
+        }
+        // (old.meta or { })
+        // (args.meta or { });
         passthru = (old.passthru or { }) // {
           craneLib = result.craneLib;
           commonArgs = result.commonArgs;
@@ -222,6 +228,12 @@ in
           in
           lib.nameValuePair pname (
             pkg.overrideAttrs (old: {
+              # caller-provided meta wins over the inferred main program
+              meta = {
+                mainProgram = cfg.crateMainProgram (path + "/${dir}");
+              }
+              // (old.meta or { })
+              // (args.meta or { });
               passthru = (old.passthru or { }) // {
                 craneLib = memberArgs.craneLib;
                 commonArgs = memberArgs.commonArgs;

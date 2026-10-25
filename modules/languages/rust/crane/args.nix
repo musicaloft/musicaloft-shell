@@ -2,7 +2,9 @@
 let
   cfg = config.languages.rust.crane;
 
-  # keys consumed by `mkArgs` itself, rather than forwarded to crane.
+  # keys consumed by `mkArgs` itself, rather than forwarded to crane. `meta`
+  # is applied by `import` and `importWorkspace` to the final package only,
+  # so the dependency build and checks don't claim to have a main program.
   consumedKeys = [
     "crossSystem"
     "pkgs"
@@ -13,6 +15,7 @@ let
     "allFeatures"
     "locked"
     "cargoExtraArgs"
+    "meta"
     "src"
     "extraPaths"
     "extraFileTypes"

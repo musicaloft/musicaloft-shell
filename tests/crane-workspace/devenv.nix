@@ -43,6 +43,7 @@ in
 
     TEST_MEMBERS = lib.concatStringsSep " " (lib.attrNames packages);
     TEST_VERSIONS = toPairs (package: package.version);
+    TEST_MAIN_PROGRAMS = toPairs (package: package.meta.mainProgram);
 
     # every member must reuse the single workspace-wide dependency build
     TEST_MEMBER_DEPS = toPairs (package: package.passthru.commonArgs.cargoArtifacts.drvPath);

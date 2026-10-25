@@ -19,6 +19,11 @@ expect_equal "member versions" \
   "workspace-cli=1.2.3 workspace-core=0.3.0 workspace-stats=0.0.0" \
   "$TEST_VERSIONS"
 
+# each member's main program is inferred from its own Cargo.toml
+expect_equal "member main programs" \
+  "workspace-cli=workspace-cli workspace-core=workspace-core workspace-stats=workspace-stats" \
+  "$TEST_MAIN_PROGRAMS"
+
 # every member must reuse the single workspace-wide dependency build
 for pair in $TEST_MEMBER_DEPS; do
   expect_equal "${pair%%=*}'s dependency build" "$TEST_WORKSPACE_DEPS" "${pair#*=}"

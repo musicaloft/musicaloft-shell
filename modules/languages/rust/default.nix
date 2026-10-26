@@ -79,10 +79,14 @@ in
     packages = with pkgs; [
       bacon
       cargo-outdated
-      cargo-llvm-cov
       cargo-machete
       cargo-mutants
       cargo-nextest
+
+      # workaround until https://github.com/NixOS/nixpkgs/issues/576588 is resolved
+      (cargo-llvm-cov.overrideAttrs (_: {
+        doCheck = false;
+      }))
     ];
 
     treefmt.config = {

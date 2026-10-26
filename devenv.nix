@@ -17,9 +17,9 @@
   git-hooks = {
     enable = lib.mkOverride 999 (!config.devenv.isTesting);
     hooks = {
-      cocoa-generate.enable = inputs ? cocoa;
-      cocoa-lint.enable = inputs ? cocoa;
-      treefmt.enable = true;
+      cocoa-generate.enable = lib.mkDefault (inputs ? cocoa);
+      cocoa-lint.enable = lib.mkDefault (inputs ? cocoa);
+      treefmt.enable = lib.mkDefault true;
     };
   };
 

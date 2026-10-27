@@ -16,7 +16,10 @@ in
 
   config = lib.mkIf cfg.enable {
     files = {
-      ".cargo/config.toml".toml.alias.cover = "llvm-cov nextest";
+      ".cargo/config.toml".toml.alias = {
+        cover = "llvm-cov nextest";
+        nt = "nextest run";
+      };
       ".cargo/mutants.toml".toml.test_tool = "nextest";
       ".cargo/nextest.toml".toml.profile.ci = {
         fail-fast = false;
